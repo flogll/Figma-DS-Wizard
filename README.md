@@ -18,7 +18,6 @@ Ce projet est une application React moderne motorisée par **Vite**. Il est con�
 
 Si tu souhaites modifier ce projet ou comprendre comment il fonctionne :
 - **[Guide Technique & Workflow](./guide_technique.md)**
-- **[Résumé du Projet (Walkthrough)](./walkthrough.md)**
 
 ---
 
