@@ -3,6 +3,7 @@ import {
   MONO, SANS,
   COMPONENT_CATALOG, DEFAULT_CONFIG,
   buildTodoItems, generateJSON, generateSpecsMd, generateTodoMd,
+  getContrastRatio, getClosestAAAColor
 } from "./logic.js";
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
@@ -177,34 +178,62 @@ export default function App() {
               </div>
             ))}
             
-            {/* Aperçus des contrastes d'accent */}
+            {/* Aperçus des contrastes d'accent avec validation AAA */}
             <div style={{ marginTop: 16 }}>
               <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Contrastes {acc.name}</div>
               
-              {/* Vis-à-vis 1: Texte accent sur fond accent */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", marginBottom: 8 }}>
+              {/* Vis-à-vis 1: Texte accent sur fond neutre (Lead) - AAA 4.5:1 */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                 {[
-                  { bg: acc.shades[100], fg: acc.shades[900], label: "Normal (Brand)" },
-                  { bg: acc.reverseShades[100], fg: acc.reverseShades[900], label: "Reverse (Brand)" }
-                ].map(({ bg, fg, label }, i) => (
-                  <div key={i} style={{ padding: 12, background: bg, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: fg }}>Texte on-brand</div>
-                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>Contraste maximal</div>
-                  </div>
-                ))}
+                  { bg: config.bgLight, fg: acc.shades[500], label: "Normal (Lead)", target: 4.5 },
+                  { bg: config.bgDark, fg: acc.reverseShades[500], label: "Reverse (Lead)", target: 4.5 }
+                ].map(({ bg, fg, label, target }, i) => {
+                  const ratio = getContrastRatio(fg, bg);
+                  const isOk = ratio >= target;
+                  const suggested = isOk ? null : getClosestAAAColor(fg, bg, target);
+                  const tooltip = isOk 
+                    ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1 (Min: ${target}:1)` 
+                    : `⚠️ Contraste insuffisant : ${ratio.toFixed(2)}:1 (Min: ${target}:1). Suggéré : ${suggested}`;
+                  
+                  return (
+                    <div key={i} title={tooltip} style={{ 
+                      padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
+                      border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
+                      transition: "all 0.2s"
+                    }}>
+                      <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>{label}</div>
+                      <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 800, color: fg, lineHeight: 1.2 }}>Lead accent</div>
+                      <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA ${target}:1 (${ratio.toFixed(2)}:1)`}</div>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Vis-à-vis 2: Texte accent sur fond neutre (Lead) */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+              {/* Vis-à-vis 2: Texte accent sur fond accent (Body) - AAA 7:1 */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {[
-                  { bg: config.bgLight, fg: acc.shades[500], label: "Normal (Lead)" },
-                  { bg: config.bgDark, fg: acc.reverseShades[500], label: "Reverse (Lead)" }
-                ].map(({ bg, fg, label }, i) => (
-                  <div key={i} style={{ padding: 12, background: bg, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: fg }}>Lead accent</div>
-                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>Impact visuel</div>
-                  </div>
-                ))}
+                  { bg: acc.shades[100], fg: acc.shades[900], label: "Normal (Body)", target: 7 },
+                  { bg: acc.reverseShades[100], fg: acc.reverseShades[900], label: "Reverse (Body)", target: 7 }
+                ].map(({ bg, fg, label, target }, i) => {
+                  const ratio = getContrastRatio(fg, bg);
+                  const isOk = ratio >= target;
+                  const suggested = isOk ? null : getClosestAAAColor(fg, bg, target);
+                  const tooltip = isOk 
+                    ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1 (Min: ${target}:1)` 
+                    : `⚠️ Contraste insuffisant : ${ratio.toFixed(2)}:1 (Min: ${target}:1). Suggéré : ${suggested}`;
+
+                  return (
+                    <div key={i} title={tooltip} style={{ 
+                      padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
+                      border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
+                      transition: "all 0.2s"
+                    }}>
+                      <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>{label}</div>
+                      <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: fg }}>Texte on-brand body</div>
+                      <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA ${target}:1 (${ratio.toFixed(2)}:1)`}</div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
