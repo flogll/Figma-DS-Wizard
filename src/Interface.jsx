@@ -114,32 +114,94 @@ export default function App() {
 
   const renderStep0 = () => (
     <div>
-      <Section title="Fonds de page">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {[["bgLight", "Background Normal"], ["bgDark", "Background Reverse"], ["ink", "Texte (ink)"], ["paper", "Texte inverse (paper)"]].map(([key, label]) => (
-            <div key={key}>
-              <label style={{ fontFamily: SANS, fontSize: 11, color: "#6b7280", display: "block", marginBottom: 4 }}>{label}</label>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <input type="color" value={config[key]} onChange={e => setConfig(p => ({ ...p, [key]: e.target.value }))}
-                  style={{ width: 36, height: 34, border: "none", borderRadius: 6, cursor: "pointer", padding: 2, flexShrink: 0 }} />
-                <input type="text" value={config[key]} onChange={e => setConfig(p => ({ ...p, [key]: e.target.value }))} style={inp({ flex: 1 })} />
-              </div>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      {[
+        { 
+          label: "Normal", 
+          bgKey: "bgLight", fgKey: "ink", 
+          bgLabel: "Background Light", fgLabel: "Text (ink)",
+          targetLead: 4.5, targetBody: 7 
+        },
+        { 
+          label: "Reverse", 
+          bgKey: "bgDark", fgKey: "paper", 
+          bgLabel: "Background Dark", fgLabel: "Text inverse (paper)",
+          targetLead: 4.5, targetBody: 7 
+        }
+      ].map((mode) => (
+        <div key={mode.label}>
+          <Section title={mode.label}>
+            {/* Sélecteurs */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+              {[
+                { key: mode.bgKey, label: mode.bgLabel },
+                { key: mode.fgKey, label: mode.fgLabel }
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label style={{ fontFamily: SANS, fontSize: 11, color: "#6b7280", display: "block", marginBottom: 4 }}>{label}</label>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input type="color" value={config[key]} onChange={e => setConfig(p => ({ ...p, [key]: e.target.value }))}
+                      style={{ width: 36, height: 34, border: "none", borderRadius: 6, cursor: "pointer", padding: 2, flexShrink: 0 }} />
+                    <input type="text" value={config[key]} onChange={e => setConfig(p => ({ ...p, [key]: e.target.value }))} style={inp({ flex: 1 })} />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Section>
-      <Section title="Aperçu Normal / Reverse">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderRadius: 10, overflow: "hidden", border: "1px solid #e5e7eb" }}>
-          {[{ bg: config.bgLight, fg: config.ink, label: "Normal" }, { bg: config.bgDark, fg: config.paper, label: "Reverse" }].map(({ bg, fg, label }) => (
-            <div key={label} style={{ padding: 18, background: bg }}>
-              <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.4, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{label}</div>
-              <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: fg, marginBottom: 4 }}>Texte principal</div>
-              <div style={{ fontFamily: SANS, fontSize: 12, color: fg, opacity: 0.7, marginBottom: 2 }}>Texte secondaire (90%)</div>
-              <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.5 }}>Texte tertiaire (80%)</div>
+
+            {/* Previews verticalement */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Lead Preview */}
+              {(() => {
+                const fg = config[mode.fgKey];
+                const bg = config[mode.bgKey];
+                const ratio = getContrastRatio(fg, bg);
+                const isOk = ratio >= mode.targetLead;
+                const suggested = isOk ? null : getClosestAAAColor(fg, bg, mode.targetLead);
+                const tooltip = isOk 
+                  ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1` 
+                  : `⚠️ Insuffisant : ${ratio.toFixed(2)}:1. Suggéré : ${suggested}`;
+                
+                return (
+                  <div title={tooltip} style={{ 
+                    padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
+                    border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
+                    transition: "all 0.2s"
+                  }}>
+                    <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>Lead</div>
+                    <div style={{ fontFamily: SANS, fontSize: 24, fontWeight: 400, color: fg, lineHeight: 1.2 }}>Texte Lead principal</div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA 4.5:1 (${ratio.toFixed(2)}:1)`}</div>
+                  </div>
+                );
+              })()}
+
+              {/* Body Preview */}
+              {(() => {
+                const fg = config[mode.fgKey];
+                const bg = config[mode.bgKey];
+                const ratio = getContrastRatio(fg, bg);
+                const isOk = ratio >= mode.targetBody;
+                const suggested = isOk ? null : getClosestAAAColor(fg, bg, mode.targetBody);
+                const tooltip = isOk 
+                  ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1` 
+                  : `⚠️ Insuffisant : ${ratio.toFixed(2)}:1. Suggéré : ${suggested}`;
+
+                return (
+                  <div title={tooltip} style={{ 
+                    padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
+                    border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
+                    transition: "all 0.2s"
+                  }}>
+                    <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>Body</div>
+                    <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: fg }}>Texte principal du corps</div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA 7:1 (${ratio.toFixed(2)}:1)`}</div>
+                  </div>
+                );
+              })()}
             </div>
-          ))}
+          </Section>
         </div>
-      </Section>
+      ))}
+    </div>
     </div>
   );
 
