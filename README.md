@@ -17,8 +17,8 @@ Ce projet est une application React moderne motorisée par **Vite**. Il est con�
 ## 📖 Documentation technique
 
 Si tu souhaites modifier ce projet ou comprendre comment il fonctionne :
-- **[Guide Technique & Workflow](https://github.com/flogll/Figma-DS-Wizard/blob/main/guide_technique.md)** (Local : `/Users/florianguillanton/.gemini/antigravity/brain/aa2e1307-fbeb-4c79-abd2-620fd0f220d9/guide_technique.md`)
-- **[Résumé du Projet (Walkthrough)](/Users/florianguillanton/.gemini/antigravity/brain/aa2e1307-fbeb-4c79-abd2-620fd0f220d9/walkthrough.md)**
+- **[Guide Technique & Workflow](./guide_technique.md)**
+- **[Résumé du Projet (Walkthrough)](./walkthrough.md)**
 
 ---
 
