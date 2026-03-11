@@ -603,8 +603,25 @@ export function generateTodoMd(selectedComponents, todoChecked) {
 
 /** Calculates relative luminance of a hex color */
 export function getLuminance(hex) {
-  const rgb = hex.replace(/^#/, '').match(/.{2}/g).map(x => {
-    const v = parseInt(x, 16) / 255;
+  if (!hex || typeof hex !== 'string') return 0;
+  const h = hex.replace(/^#/, '');
+  if (h.length !== 3 && h.length !== 6) return 0;
+  
+  let r, g, b;
+  if (h.length === 3) {
+    r = parseInt(h[0] + h[0], 16);
+    g = parseInt(h[1] + h[1], 16);
+    b = parseInt(h[2] + h[2], 16);
+  } else {
+    r = parseInt(h.substring(0, 2), 16);
+    g = parseInt(h.substring(2, 4), 16);
+    b = parseInt(h.substring(4, 6), 16);
+  }
+
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return 0;
+
+  const rgb = [r, g, b].map(v => {
+    v /= 255;
     return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
   });
   return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
@@ -621,23 +638,37 @@ export function getContrastRatio(hex1, hex2) {
 
 /** Converts Hex to HSL */
 function hexToHsl(hex) {
-  let r = parseInt(hex.substring(1, 3), 16) / 255;
-  let g = parseInt(hex.substring(3, 5), 16) / 255;
-  let b = parseInt(hex.substring(5, 7), 16) / 255;
+  if (!hex || typeof hex !== 'string') return [0, 0, 0];
+  const h = hex.replace(/^#/, '');
+  if (h.length !== 3 && h.length !== 6) return [0, 0, 0];
+
+  let r, g, b;
+  if (h.length === 3) {
+    r = parseInt(h[0] + h[0], 16) / 255;
+    g = parseInt(h[1] + h[1], 16) / 255;
+    b = parseInt(h[2] + h[2], 16) / 255;
+  } else {
+    r = parseInt(h.substring(0, 2), 16) / 255;
+    g = parseInt(h.substring(2, 4), 16) / 255;
+    b = parseInt(h.substring(4, 6), 16) / 255;
+  }
+  
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return [0, 0, 0];
+
   let max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  if (max === min) { h = s = 0; }
+  let h_hsl, s, l = (max + min) / 2;
+  if (max === min) { h_hsl = s = 0; }
   else {
     let d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      case r: h_hsl = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h_hsl = (b - r) / d + 2; break;
+      case b: h_hsl = (r - g) / d + 4; break;
     }
-    h /= 6;
+    h_hsl /= 6;
   }
-  return [h * 360, s * 100, l * 100];
+  return [h_hsl * 360, s * 100, l * 100];
 }
 
 /** Converts HSL to Hex */
