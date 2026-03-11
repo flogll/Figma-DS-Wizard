@@ -176,6 +176,37 @@ export default function App() {
                 </div>
               </div>
             ))}
+            
+            {/* Aperçus des contrastes d'accent */}
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Contrastes {acc.name}</div>
+              
+              {/* Vis-à-vis 1: Texte accent sur fond accent */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb", marginBottom: 8 }}>
+                {[
+                  { bg: acc.shades[100], fg: acc.shades[900], label: "Normal (Brand)" },
+                  { bg: acc.reverseShades[100], fg: acc.reverseShades[900], label: "Reverse (Brand)" }
+                ].map(({ bg, fg, label }, i) => (
+                  <div key={i} style={{ padding: 12, background: bg, display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: fg }}>Texte on-brand</div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>Contraste maximal</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Vis-à-vis 2: Texte accent sur fond neutre (Lead) */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                {[
+                  { bg: config.bgLight, fg: acc.shades[500], label: "Normal (Lead)" },
+                  { bg: config.bgDark, fg: acc.reverseShades[500], label: "Reverse (Lead)" }
+                ].map(({ bg, fg, label }, i) => (
+                  <div key={i} style={{ padding: 12, background: bg, display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: fg }}>Lead accent</div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>Impact visuel</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ))}
         <button onClick={() => setConfig(p => ({ ...p, accents: [...p.accents, { name: `accent${p.accents.length + 1}`, shades: { 100: "#E0E7FF", 500: "#6366F1", 900: "#1E1B4B" }, reverseShades: { 100: "#1E1B4B", 500: "#6366F1", 900: "#E0E7FF" } }] }))}
