@@ -193,7 +193,9 @@ export default function App() {
                   }}>
                     <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>Body</div>
                     <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: fg }}>Texte principal du corps</div>
-                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA 7:1 (${ratio.toFixed(2)}:1)`}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: fg, opacity: 0.9 }}>Texte secondaire (90%)</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: fg, opacity: 0.8 }}>Texte tertiaire (80%)</div>
+                    <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8, marginTop: 4 }}>{`AAA 7:1 (${ratio.toFixed(2)}:1)`}</div>
                   </div>
                 );
               })()}
