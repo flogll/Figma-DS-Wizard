@@ -157,84 +157,85 @@ export default function App() {
                 </button>
               )}
             </div>
-            {[["Normal", "shades"], ["Reverse", "reverseShades"]].map(([label, field]) => (
-              <div key={field} style={{ marginBottom: field === "shades" ? 14 : 0 }}>
-                <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{label}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
-                  {["100", "500", "900"].map(shade => (
-                    <div key={shade}>
-                      <div style={{ fontFamily: SANS, fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Teinte {shade}</div>
-                      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                        <input type="color" value={acc[field][shade]} onChange={e => {
-                          const a = [...config.accents]; a[ai] = { ...a[ai], [field]: { ...a[ai][field], [shade]: e.target.value } }; setConfig(p => ({ ...p, accents: a }));
-                        }} style={{ width: 30, height: 28, border: "none", borderRadius: 4, cursor: "pointer", padding: 2, flexShrink: 0 }} />
-                        <input type="text" value={acc[field][shade]} onChange={e => {
-                          const a = [...config.accents]; a[ai] = { ...a[ai], [field]: { ...a[ai][field], [shade]: e.target.value } }; setConfig(p => ({ ...p, accents: a }));
-                        }} style={inp({ flex: 1, fontSize: 11 })} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            
-            {/* Aperçus des contrastes d'accent avec validation AAA */}
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Contrastes {acc.name}</div>
-              
-              {/* Vis-à-vis 1: Texte accent sur fond neutre (Lead) - AAA 4.5:1 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                {[
-                  { bg: config.bgLight, fg: acc.shades[500], label: "Normal (Lead)", target: 4.5 },
-                  { bg: config.bgDark, fg: acc.reverseShades[500], label: "Reverse (Lead)", target: 4.5 }
-                ].map(({ bg, fg, label, target }, i) => {
-                  const ratio = getContrastRatio(fg, bg);
-                  const isOk = ratio >= target;
-                  const suggested = isOk ? null : getClosestAAAColor(fg, bg, target);
-                  const tooltip = isOk 
-                    ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1 (Min: ${target}:1)` 
-                    : `⚠️ Contraste insuffisant : ${ratio.toFixed(2)}:1 (Min: ${target}:1). Suggéré : ${suggested}`;
+            {/* Colonnes Normal vs Reverse */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              {[
+                { label: "Normal", field: "shades", bg: config.bgLight, targetLead: 4.5, targetBody: 7 },
+                { label: "Reverse", field: "reverseShades", bg: config.bgDark, targetLead: 4.5, targetBody: 7 }
+              ].map((mode) => (
+                <div key={mode.field}>
+                  {/* Titre de colonne */}
+                  <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>{mode.label}</div>
                   
-                  return (
-                    <div key={i} title={tooltip} style={{ 
-                      padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
-                      border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
-                      transition: "all 0.2s"
-                    }}>
-                      <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>{label}</div>
-                      <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 800, color: fg, lineHeight: 1.2 }}>Lead accent</div>
-                      <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA ${target}:1 (${ratio.toFixed(2)}:1)`}</div>
-                    </div>
-                  );
-                })}
-              </div>
+                  {/* Sélecteurs */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                    {["100", "500", "900"].map(shade => (
+                      <div key={shade}>
+                        <div style={{ fontFamily: SANS, fontSize: 10, color: "#9ca3af", marginBottom: 4 }}>Teinte {shade}</div>
+                        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                          <input type="color" value={acc[mode.field][shade]} onChange={e => {
+                            const a = [...config.accents]; a[ai] = { ...a[ai], [mode.field]: { ...a[ai][mode.field], [shade]: e.target.value } }; setConfig(p => ({ ...p, accents: a }));
+                          }} style={{ width: 30, height: 28, border: "none", borderRadius: 4, cursor: "pointer", padding: 2, flexShrink: 0 }} />
+                          <input type="text" value={acc[mode.field][shade]} onChange={e => {
+                            const a = [...config.accents]; a[ai] = { ...a[ai], [mode.field]: { ...a[ai][mode.field], [shade]: e.target.value } }; setConfig(p => ({ ...p, accents: a }));
+                          }} style={inp({ flex: 1, fontSize: 11 })} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Vis-à-vis 2: Texte accent sur fond accent (Body) - AAA 7:1 */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {[
-                  { bg: acc.shades[100], fg: acc.shades[900], label: "Normal (Body)", target: 7 },
-                  { bg: acc.reverseShades[100], fg: acc.reverseShades[900], label: "Reverse (Body)", target: 7 }
-                ].map(({ bg, fg, label, target }, i) => {
-                  const ratio = getContrastRatio(fg, bg);
-                  const isOk = ratio >= target;
-                  const suggested = isOk ? null : getClosestAAAColor(fg, bg, target);
-                  const tooltip = isOk 
-                    ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1 (Min: ${target}:1)` 
-                    : `⚠️ Contraste insuffisant : ${ratio.toFixed(2)}:1 (Min: ${target}:1). Suggéré : ${suggested}`;
+                  {/* Previews verticalement */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                     {/* Lead Preview */}
+                     {(() => {
+                        const fg = acc[mode.field]["500"];
+                        const bg = mode.bg;
+                        const ratio = getContrastRatio(fg, bg);
+                        const isOk = ratio >= mode.targetLead;
+                        const suggested = isOk ? null : getClosestAAAColor(fg, bg, mode.targetLead);
+                        const tooltip = isOk 
+                          ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1` 
+                          : `⚠️ Insuffisant : ${ratio.toFixed(2)}:1. Suggéré : ${suggested}`;
+                        
+                        return (
+                          <div title={tooltip} style={{ 
+                            padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
+                            border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
+                            transition: "all 0.2s"
+                          }}>
+                            <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>Lead</div>
+                            <div style={{ fontFamily: SANS, fontSize: 24, fontWeight: 400, color: fg, lineHeight: 1.2 }}>Lead accent</div>
+                            <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA 4.5:1 (${ratio.toFixed(2)}:1)`}</div>
+                          </div>
+                        );
+                     })()}
 
-                  return (
-                    <div key={i} title={tooltip} style={{ 
-                      padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
-                      border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
-                      transition: "all 0.2s"
-                    }}>
-                      <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>{label}</div>
-                      <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: fg }}>Texte on-brand body</div>
-                      <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA ${target}:1 (${ratio.toFixed(2)}:1)`}</div>
-                    </div>
-                  );
-                })}
-              </div>
+                     {/* Body Preview */}
+                     {(() => {
+                        const bg = acc[mode.field]["100"];
+                        const fg = acc[mode.field]["900"];
+                        const ratio = getContrastRatio(fg, bg);
+                        const isOk = ratio >= mode.targetBody;
+                        const suggested = isOk ? null : getClosestAAAColor(fg, bg, mode.targetBody);
+                        const tooltip = isOk 
+                          ? `Contraste AAA conforme : ${ratio.toFixed(2)}:1` 
+                          : `⚠️ Insuffisant : ${ratio.toFixed(2)}:1. Suggéré : ${suggested}`;
+
+                        return (
+                          <div title={tooltip} style={{ 
+                            padding: 16, background: bg, borderRadius: 8, display: "flex", flexDirection: "column", gap: 6,
+                            border: `2px solid ${isOk ? "transparent" : "#ef4444"}`,
+                            transition: "all 0.2s"
+                          }}>
+                            <div style={{ fontFamily: SANS, fontSize: 10, fontWeight: 700, color: fg, opacity: 0.5, textTransform: "uppercase" }}>Body</div>
+                            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: fg }}>Texte on-brand body</div>
+                            <div style={{ fontFamily: SANS, fontSize: 11, color: fg, opacity: 0.8 }}>{`AAA 7:1 (${ratio.toFixed(2)}:1)`}</div>
+                          </div>
+                        );
+                     })()}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
