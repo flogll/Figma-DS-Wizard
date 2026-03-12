@@ -43,17 +43,6 @@
         });
       }
     </script>
-    <style type="text/tailwindcss">
-      @layer base {
-        body { @apply bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col; }
-      }
-      @layer components {
-        .input-base { @apply w-full px-3 py-1.5 text-xs font-mono border-2 border-slate-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors; }
-        .btn-primary { @apply px-4 py-2 bg-brand-primary text-white text-sm font-bold rounded-lg hover:opacity-90 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition-all; }
-        .btn-secondary { @apply px-4 py-2 bg-white text-slate-700 text-sm font-semibold border-2 border-slate-200 rounded-lg hover:border-slate-300 disabled:text-slate-300 disabled:cursor-not-allowed transition-all; }
-      }
-      [x-cloak] { display: none !important; }
-    </style>
   </head>
   <body x-data="dsWizard" x-cloak>
     <!-- Top bar -->
@@ -80,28 +69,27 @@
     </header>
 
     <main class="flex-1 overflow-y-auto">
-      <div class="max-w-3xl mx-auto px-4 py-8">
+      <div class="wizard-container">
 
       <!-- Content -->
-      <div style="flex: 1; overflow-y: auto;">
-        <div style="max-width: 680px; margin: 0 auto; padding: 20px 16px;">
-          
-          <!-- TAB: VARIABLES -->
-          <template x-if="tab === 'variables'">
-            <div class="space-y-6">
-              <!-- Step dots -->
-              <div class="flex gap-2 items-center mb-8">
-                <template x-for="(s, i) in STEPS" :key="i">
-                  <button @click="goToStep(i)" 
-                          class="h-2 rounded-full transition-all duration-300"
-                          :class="i === step ? 'w-8 bg-brand-primary' : (i < step ? 'w-2 bg-brand-dark' : 'w-2 bg-slate-200 hover:bg-slate-300')">
-                  </button>
-                </template>
-                <span class="text-xs font-semibold text-slate-400 ml-2" x-text="`Étape ${step + 1}/${STEPS.length}`"></span>
-              </div>
+      <div class="space-y-6">
+        
+        <!-- TAB: VARIABLES -->
+        <template x-if="tab === 'variables'">
+          <div class="space-y-6">
+            <!-- Step dots -->
+            <div class="flex gap-2 items-center mb-8">
+              <template x-for="(s, i) in STEPS" :key="i">
+                <button @click="goToStep(i)" 
+                        class="step-dot"
+                        :class="i === step ? 'step-dot-active' : (i < step ? 'step-dot-past' : 'step-dot-future')">
+                </button>
+              </template>
+              <span class="text-xs font-semibold text-slate-400 ml-2" x-text="`Étape ${step + 1}/${STEPS.length}`"></span>
+            </div>
 
-              <!-- Step Container -->
-              <section class="bg-white rounded-2xl border-2 border-slate-100 p-8 shadow-sm">
+            <!-- Step Container -->
+            <section class="card-wizard">
                 <div class="mb-6">
                   <h2 class="text-lg font-extrabold text-brand-dark leading-tight" x-text="STEPS[step]"></h2>
                   <div class="h-1 w-10 bg-brand-primary rounded-full mt-2"></div>
@@ -143,7 +131,7 @@
                                  get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetLead); } 
                                }" 
                                class="p-5 rounded-xl border-2 transition-all duration-300"
-                               :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}; shadow: ${contrast.isOk ? 'none' : '0 0 0 4px rgba(239, 68, 68, 0.1)'}`"
+                               :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}`"
                                :title="contrast.tooltip">
                             <div class="text-[9px] font-black uppercase tracking-widest mb-1 opacity-50" :style="`color: ${config[mode.fgKey]}`">Lead</div>
                             <div class="text-2xl font-medium leading-tight mb-2" :style="`color: ${config[mode.fgKey]}`">Texte Lead principal</div>
@@ -155,7 +143,7 @@
                                  get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetBody); } 
                                }" 
                                class="p-5 rounded-xl border-2 transition-all duration-300"
-                               :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}; shadow: ${contrast.isOk ? 'none' : '0 0 0 4px rgba(239, 68, 68, 0.1)'}`"
+                               :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}`"
                                :title="contrast.tooltip">
                             <div class="text-[9px] font-black uppercase tracking-widest mb-1 opacity-50" :style="`color: ${config[mode.fgKey]}`">Body</div>
                             <div class="text-sm font-bold mb-1" :style="`color: ${config[mode.fgKey]}`">Texte principal du corps</div>
@@ -175,7 +163,7 @@
                     <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Palettes d'accent</h3>
                     
                     <template x-for="(acc, ai) in config.accents" :key="ai">
-                      <div class="p-6 rounded-2xl border-2 border-slate-100 space-y-6 relative overflow-hidden group/acc">
+                      <div class="card-nested group/acc">
                         <div class="flex items-center justify-between">
                           <div class="flex items-center gap-3">
                             <div class="w-2 h-6 bg-brand-primary rounded-full"></div>
@@ -308,7 +296,7 @@
                       
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Fonts summary -->
-                        <div class="p-6 rounded-2xl border-2 border-slate-100 bg-slate-50/50 space-y-4">
+                        <div class="card-summary">
                            <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Typographie</h4>
                            <div class="space-y-2">
                              <template x-for="[role, val] in Object.entries(config.fonts)" :key="role">
@@ -323,7 +311,7 @@
                         </div>
 
                         <!-- Variables overview -->
-                        <div class="p-6 rounded-2xl border-2 border-slate-100 bg-slate-50/50 space-y-4">
+                        <div class="card-summary">
                           <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Collections</h4>
                           <div class="space-y-2 text-[11px]">
                             <template x-for="coll in [
@@ -417,8 +405,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <template x-for="comp in catalog[group]" :key="comp.id">
                         <button @click="toggleComponent(group, comp.id)" 
-                                class="p-4 rounded-xl border-2 text-left transition-all duration-200 group relative"
-                                :class="isComponentSelected(group, comp.id) ? 'bg-brand-primary/5 border-brand-primary shadow-sm' : 'bg-white border-slate-100 hover:border-brand-primary/30'">
+                                class="comp-card"
+                                :class="isComponentSelected(group, comp.id) ? 'comp-card-selected' : 'comp-card-idle'">
                           <div class="flex items-center justify-between mb-1">
                             <span class="text-sm font-bold tracking-tight" :class="isComponentSelected(group, comp.id) ? 'text-brand-primary' : 'text-brand-dark'" x-text="comp.name"></span>
                             <div x-show="isComponentSelected(group, comp.id)" class="w-4 h-4 rounded-full bg-brand-primary flex items-center justify-center">
@@ -556,8 +544,8 @@
                           get compDone() { return getCompletedCount(this.items); },
                           get checkableTotal() { return getCheckableCount(this.items); },
                           get isCompDone() { return this.compDone === this.checkableTotal && this.checkableTotal > 0; }
-                        }" class="bg-white rounded-2xl border-2 transition-all duration-300 overflow-hidden"
-                           :class="isCompDone ? 'border-green-100 bg-green-50/20 shadow-none' : 'border-slate-100 shadow-sm'">
+                        }" class="todo-comp-card"
+                           :class="isCompDone ? 'todo-comp-done' : 'todo-comp-pending'">
                           
                           <div class="px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100" @click="toggleAllComponent(items)">
                             <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
@@ -581,12 +569,12 @@
                                   </div>
                                 </template>
                                 <!-- Property item (with checkbox) -->
-                                <template x-if="!item.isState">
-                                  <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer group transition-all"
+                                                  <template x-if="!item.isState">
+                                  <div class="todo-item-row"
                                        :class="item.level === 2 ? 'ml-6' : ''"
                                        @click="toggleTodoItem(item.id)">
-                                    <div class="w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-all"
-                                         :class="todoChecked[item.id] ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'">
+                                    <div class="checkbox-ui"
+                                         :class="todoChecked[item.id] ? 'checkbox-ui-checked' : 'checkbox-ui-unchecked'">
                                       <svg x-show="todoChecked[item.id]" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                     </div>
                                     <div class="flex flex-1 items-baseline gap-3">
