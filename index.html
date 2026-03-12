@@ -493,9 +493,12 @@
                     get catItems() {
                         return this.cat.comps.flatMap(c => buildTodoItems(c));
                     },
+                    get catCheckable() {
+                        return this.catItems.filter(it => !it.isState);
+                    },
                     get catDone() {
                         const count = this.getCompletedCount(this.catItems);
-                        return count === this.catItems.length && this.catItems.length > 0;
+                        return count === this.catCheckable.length && this.catCheckable.length > 0;
                     },
                     get globalStats() {
                         return this.getGlobalTodoProgress();
@@ -541,7 +544,7 @@
                            <h2 class="text-2xl font-black text-brand-dark tracking-tight" x-text="cat.group"></h2>
                            <span x-show="catDone" class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Gagné !</span>
                          </div>
-                         <p class="text-xs font-medium text-slate-400" x-text="`${getCompletedCount(catItems)} / ${catItems.length} validés`"></p>
+                         <p class="text-xs font-medium text-slate-400" x-text="`${getCompletedCount(catItems)} / ${catCheckable.length} validés`"></p>
                        </div>
                     </header>
 
@@ -549,8 +552,10 @@
                       <template x-for="comp in cat.comps" :key="comp.id">
                         <div x-data="{
                           get items() { return buildTodoItems(comp); },
+                          get checkableItems() { return this.items.filter(it => !it.isState); },
                           get compDone() { return getCompletedCount(this.items); },
-                          get isCompDone() { return this.compDone === this.items.length && this.items.length > 0; }
+                          get checkableTotal() { return getCheckableCount(this.items); },
+                          get isCompDone() { return this.compDone === this.checkableTotal && this.checkableTotal > 0; }
                         }" class="bg-white rounded-2xl border-2 transition-all duration-300 overflow-hidden"
                            :class="isCompDone ? 'border-green-100 bg-green-50/20 shadow-none' : 'border-slate-100 shadow-sm'">
                           
@@ -561,28 +566,40 @@
                             </div>
                             <div class="flex-1">
                                <h4 class="text-sm font-extrabold text-brand-dark leading-none pb-1" x-text="comp.name"></h4>
-                               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" x-text="`${compDone}/${items.length} propriétés`"></p>
+                               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" x-text="`${compDone}/${checkableTotal} propriétés`"></p>
                             </div>
-                            <button class="text-[10px] font-black uppercase tracking-widest text-brand-primary" x-text="items.every(it => todoChecked[it.id]) ? 'Tout décocher' : 'Tout cocher'"></button>
+                            <button class="text-[10px] font-black uppercase tracking-widest text-brand-primary" x-text="checkableItems.every(it => todoChecked[it.id]) ? 'Tout décocher' : 'Tout cocher'"></button>
                           </div>
                           
                           <div class="px-6 py-4 space-y-1">
                             <template x-for="item in items" :key="item.id">
-                              <label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer group transition-all" :class="item.level === 2 ? 'ml-6' : ''">
-                                <input type="checkbox" x-model="todoChecked[item.id]" @change="handleTodoChange(item.id, items)" class="w-4 h-4 rounded border-2 border-slate-200 text-brand-primary focus:ring-brand-primary transition-all" />
-                                <div class="flex flex-1 items-baseline gap-3">
-                                  <span class="text-sm transition-all" 
-                                        :class="[
-                                          todoChecked[item.id] ? 'text-slate-300 line-through' : 'text-slate-700',
-                                          item.isState ? 'font-bold' : 'font-medium',
-                                          item.level === 2 ? 'font-mono text-xs' : ''
-                                        ]"
-                                        x-text="item.label"></span>
-                                  <template x-if="item.var">
-                                    <span class="font-mono text-[9px] text-slate-300 font-bold px-2 py-0.5 rounded bg-slate-50 group-hover:bg-slate-100 transition-colors" x-text="`→ ${item.var}`"></span>
-                                  </template>
-                                </div>
-                              </label>
+                              <div>
+                                <!-- State header (no checkbox) -->
+                                <template x-if="item.isState">
+                                  <div class="flex items-center gap-2 pt-3 pb-1" :class="item.level === 2 ? 'ml-6' : ''">
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" x-text="item.label"></span>
+                                  </div>
+                                </template>
+                                <!-- Property item (with checkbox) -->
+                                <template x-if="!item.isState">
+                                  <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer group transition-all"
+                                       :class="item.level === 2 ? 'ml-6' : ''"
+                                       @click="toggleTodoItem(item.id)">
+                                    <div class="w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-all"
+                                         :class="todoChecked[item.id] ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white'">
+                                      <svg x-show="todoChecked[item.id]" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <div class="flex flex-1 items-baseline gap-3">
+                                      <span class="text-sm font-medium transition-all" 
+                                            :class="todoChecked[item.id] ? 'text-slate-300 line-through' : 'text-slate-700'"
+                                            x-text="item.label"></span>
+                                      <template x-if="item.var">
+                                        <span class="font-mono text-[9px] text-slate-300 font-bold px-2 py-0.5 rounded bg-slate-50 group-hover:bg-slate-100 transition-colors" x-text="`→ ${item.var}`"></span>
+                                      </template>
+                                    </div>
+                                  </div>
+                                </template>
+                              </div>
                             </template>
                           </div>
                         </div>
