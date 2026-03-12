@@ -64,17 +64,6 @@ Une fois satisfait, utilise ces trois commandes magiques dans ton terminal :
 
 ---
 
-## 🪄 4. Que se passe-t-il après le `push` ?
-
-C'est là que la magie opère :
-1. **GitHub reçoit ton code**.
-2. Il voit le dossier `.github/workflows` et lance le "robot".
-3. **Le robot compile** ton code (il fait un `npm run build` tout seul).
-4. **Il met à jour le site** : Le résultat de la compilation est envoyé sur la branche `gh-pages`.
-5. Ton site sur `flogll.github.io/Figma-DS-Wizard/` est mis à jour automatiquement au bout de ~60 secondes.
-
----
-
 ### Résumé des commandes utiles
 - `npm run dev` : Pour travailler et voir les changements en temps réel.
 - `npm run build` : Pour vérifier que la compilation finale ne comporte pas d'erreurs.
