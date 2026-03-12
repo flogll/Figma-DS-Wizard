@@ -1,7 +1,7 @@
 import Alpine from "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/module.esm.js";
 import {
   COMPONENT_CATALOG, DEFAULT_CONFIG,
-  buildTodoItems, generateJSON, generateSpecsMd, generateTodoMd,
+  buildTodoItems, generateJSON,
   getContrastRatio, getClosestAAAColor
 } from "./logic.js";
 
@@ -165,17 +165,6 @@ Alpine.data('dsWizard', () => ({
       const payload = generateJSON(this.config);
       this.handleDownload(JSON.stringify(payload, null, 2), "ds-variables.json", "application/json");
       this.variablesConfigured = true;
-    },
-
-    downloadSpecs() {
-      const payload = generateSpecsMd(this.config, this.selectedComponents);
-      this.handleDownload(payload, "ds-specs.md", "text/markdown");
-      this.componentsConfirmed = true;
-    },
-
-    downloadTodo() {
-      const payload = generateTodoMd(this.selectedComponents, this.todoChecked);
-      this.handleDownload(payload, "ds-todo.md", "text/markdown");
     },
     
     // UI Helpers exposed to template

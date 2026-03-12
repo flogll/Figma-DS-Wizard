@@ -546,58 +546,7 @@ export function generateJSON(config) {
   ]};
 }
 
-/**
- * Generate the component specifications Markdown document.
- */
-export function generateSpecsMd(config, selectedComponents) {
-  const date = new Date().toLocaleDateString("fr-FR");
-  let md = `# Design System — Spécifications des composants\n\n> Généré le ${date}  \n> Accents : ${config.accents.map(a=>a.name).join(", ")}  \n> Polices : ${config.fonts.heading} (heading) · ${config.fonts.body} (body)\n\n---\n\n`;
-  Object.entries(selectedComponents).forEach(([group,ids])=>{
-    if(!ids.length) return;
-    md+=`## ${group}\n\n`;
-    ids.forEach(id=>{
-      const comp=Object.values(COMPONENT_CATALOG).flat().find(c=>c.id===id);
-      if(!comp) return;
-      md+=`### ${comp.name}\n\n> ${comp.desc}\n\n`;
-      md+=`**Variants** : ${comp.variants.map(v=>`\`${v}\``).join(" · ")}\n\n`;
-      if(comp.sizes?.length>0) md+=`**Tailles** : ${comp.sizes.map(s=>`\`${s}\``).join(" · ")}\n\n`;
-      md+=`**États** : ${comp.states.map(s=>`\`${s}\``).join(" · ")}\n\n`;
-      if(comp.deviceVariants) md+=`**⚠️ Variant Device requis** : ${comp.deviceNote}\n\n`;
-      md+=`**Variables à lier**\n\n| Propriété | Variable |\n|---|---|\n`;
-      comp.tokens.forEach(t=>{ md+=`| \`${t.prop}\` | \`${t.var}\` |\n`; });
-      md+=`\n---\n\n`;
-    });
-  });
-  return md;
-}
 
-/**
- * Generate the components to-do checklist as Markdown.
- */
-export function generateTodoMd(selectedComponents, todoChecked) {
-  const date = new Date().toLocaleDateString("fr-FR");
-  let md = `# Design System — To-do composants\n\n> Généré le ${date}\n\n`;
-  const allComps = Object.values(COMPONENT_CATALOG).flat();
-  Object.entries(selectedComponents).forEach(([group, ids]) => {
-    if (!ids.length) return;
-    md += `## ${group}\n\n`;
-    ids.forEach(id => {
-      const comp = allComps.find(c => c.id === id);
-      if (!comp) return;
-      const items = buildTodoItems(comp);
-      const done = items.filter(it => todoChecked[it.id]).length;
-      md += `### ${comp.name} (${done}/${items.length})\n\n`;
-      items.forEach(item => {
-        const checked = todoChecked[item.id] ? "x" : " ";
-        const indent = item.level === 2 ? "  " : "";
-        const varStr = item.var ? ` → \`${item.var}\`` : "";
-        md += `${indent}- [${checked}] **${item.label}**${varStr}\n`;
-      });
-      md += "\n";
-    });
-  });
-  return md;
-}
 
 // ─── COLOR UTILITIES ──────────────────────────────────────────────────────────
 
