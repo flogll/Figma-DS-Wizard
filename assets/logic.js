@@ -456,8 +456,8 @@ export function generateJSON(config) {
   [{k:"sm",v:640},{k:"md",v:768},{k:"lg",v:1024},{k:"xl",v:1280},{k:"2xl",v:1536}].forEach(({k,v})=>prim.push({name:`breakpoint/${k}`,type:"NUMBER",values:{Value:v},description:`${v}px`}));
 
   const N="01 – Primitives", S="02 – Sémantique";
-  const al=(col,name)=>({$alias:`${col}/${name}`});
-  const hexA=(hex,op)=>{const h=hex.replace("#","");return`#${h}${Math.round(op*255).toString(16).padStart(2,"0")}`};
+  const al=(col,name)=>({type:"VARIABLE_ALIAS",id:name});
+  const hexA=(hex,op)=>hex.toUpperCase();
   const fa=config.accents[0]?.name||"blue";
   sem.push({name:"semantic/background/page",type:"COLOR",values:{Normal:al(N,"color/neutral/background-light"),Reverse:al(N,"color/neutral/background-dark")}});
   sem.push({name:"semantic/background/surface",type:"COLOR",values:{Normal:al(N,"color/white"),Reverse:al(N,"color/gray/800")}});
@@ -523,7 +523,7 @@ export function generateJSON(config) {
     {name:`component/nav/item/background/active`,type:"COLOR",values:{Normal:al(S,`semantic/accent/${fa}/subtle`),Reverse:al(S,`semantic/accent/${fa}/subtle`)}},
   ];
 
-  const na=(name,d,t,m,sl,desc="")=>({name,type:"NUMBER",description:desc,values:{Desktop:{"$alias":`${N}/${d}`},Tablette:{"$alias":`${N}/${t}`},Mobile:{"$alias":`${N}/${m}`},Slides:sl}});
+  const na=(name,d,t,m,sl,desc="")=>({name,type:"NUMBER",description:desc,values:{Desktop:al(N,d),Tablette:al(N,t),Mobile:al(N,m),Slides:sl}});
   const hd={h1:{d:72,t:56,m:40,sl:96},h2:{d:60,t:48,m:36,sl:80},h3:{d:48,t:36,m:30,sl:64},h4:{d:36,t:30,m:24,sl:48},h5:{d:30,t:24,m:20,sl:40},h6:{d:24,t:20,m:18,sl:32}};
   const hlh={h1:{d:1.1,t:1.15,m:1.2,sl:1.05},h2:{d:1.15,t:1.2,m:1.25,sl:1.1},h3:{d:1.2,t:1.25,m:1.3,sl:1.15},h4:{d:1.25,t:1.3,m:1.35,sl:1.2},h5:{d:1.3,t:1.35,m:1.4,sl:1.25},h6:{d:1.35,t:1.4,m:1.45,sl:1.3}};
   const hls={h1:{d:-1.4,t:-1.1,m:-0.8,sl:-2},h2:{d:-1.2,t:-0.9,m:-0.6,sl:-1.6},h3:{d:-0.8,t:-0.6,m:-0.4,sl:-1.2},h4:{d:-0.4,t:-0.3,m:-0.2,sl:-0.8},h5:{d:-0.2,t:-0.1,m:0,sl:-0.4},h6:{d:0,t:0,m:0,sl:-0.2}};
