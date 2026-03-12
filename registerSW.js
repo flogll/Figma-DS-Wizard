@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/Figma-DS-Wizard/sw.js', { scope: '/Figma-DS-Wizard/' })})}

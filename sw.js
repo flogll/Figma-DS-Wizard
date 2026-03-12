@@ -1,1 +1,48 @@
-if(!self.define){let e,i={};const n=(n,r)=>(n=new URL(n+".js",r).href,i[n]||new Promise(i=>{if("document"in self){const e=document.createElement("script");e.src=n,e.onload=i,document.head.appendChild(e)}else e=n,importScripts(n),i()}).then(()=>{let e=i[n];if(!e)throw new Error(`Module ${n} didn’t register its module`);return e}));self.define=(r,s)=>{const o=e||("document"in self?document.currentScript.src:"")||location.href;if(i[o])return;let f={};const t=e=>n(e,o),c={module:{uri:o},exports:f,require:t};i[o]=Promise.all(r.map(e=>c[e]||t(e))).then(e=>(s(...e),f))}}define(["./workbox-8c29f6e4"],function(e){"use strict";self.skipWaiting(),e.clientsClaim(),e.precacheAndRoute([{url:"registerSW.js",revision:"8a3902724440a48e769bfae17665b364"},{url:"index.html",revision:"f380813e036093576794c70e9946a2b9"},{url:"icon-512.png",revision:"894ef83260feca8fdad343b5d1339465"},{url:"icon-192.png",revision:"894ef83260feca8fdad343b5d1339465"},{url:"assets/index-BuOwGMbg.js",revision:null},{url:"icon-192.png",revision:"894ef83260feca8fdad343b5d1339465"},{url:"icon-512.png",revision:"894ef83260feca8fdad343b5d1339465"},{url:"manifest.webmanifest",revision:"ebc76c7f6178b416951631f2f51c73fd"}],{}),e.cleanupOutdatedCaches(),e.registerRoute(new e.NavigationRoute(e.createHandlerBoundToURL("index.html")))});
+const CACHE_NAME = 'dswizard-cache-v1';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './assets/style.css',
+  './assets/app.js',
+  './assets/logic.js',
+  './icon-192.png',
+  './icon-512.png'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Return cached version or fetch from network
+        return response || fetch(event.request).catch(() => {
+            // Fallback strategy if network fails (e.g., return index.html)
+            return caches.match('./index.html');
+        });
+      })
+  );
+});

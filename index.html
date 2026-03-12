@@ -5,9 +5,511 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Figma DS Generator — Design System Wizard</title>
     <meta name="description" content="Générez vos variables Figma et documentez vos composants design system en quelques étapes." />
-    <script type="module" crossorigin src="/Figma-DS-Wizard/assets/index-BuOwGMbg.js"></script>
-  <link rel="manifest" href="/Figma-DS-Wizard/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/Figma-DS-Wizard/registerSW.js"></script></head>
-  <body>
-    <div id="root"></div>
+    <link rel="stylesheet" href="./assets/style.css">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <script type="module" src="./assets/app.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('ServiceWorker registration successful with scope: ', reg.scope);
+          }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
+  </head>
+  <body x-data="dsWizard">
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; background: #f9fafb; display: flex; flex-direction: column;">
+      
+      <!-- Top bar -->
+      <div style="background: #1a1a2e; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; min-height: 52px; flex-shrink: 0;">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.01em;">Figma DS Generator</div>
+          <div style="font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em;">Design System Wizard</div>
+        </div>
+        <div style="display: flex; gap: 2px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 3px;">
+          <template x-for="t in [{ id: 'variables', label: 'Variables' }, { id: 'components', label: 'Composants' }, { id: 'todo', label: 'To-do' }]" :key="t.id">
+            <button @click="setTab(t.id)" 
+                    :style="tab === t.id ? 'background: #fff; color: #1a1a2e;' : 'background: transparent; color: rgba(255,255,255,0.55);'"
+                    style="font-family: inherit; padding: 5px 16px; border-radius: 7px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s;">
+              <span x-text="t.label"></span>
+              <template x-if="t.id === 'todo' && totalSelected > 0">
+                <span :style="tab === 'todo' ? 'background: #4f46e5; color: #fff;' : 'background: rgba(255,255,255,0.15); color: #fff;'"
+                      style="margin-left: 5px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 999px;"
+                      x-text="totalSelected"></span>
+              </template>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div style="flex: 1; overflow-y: auto;">
+        <div style="max-width: 680px; margin: 0 auto; padding: 20px 16px;">
+          
+          <!-- TAB: VARIABLES -->
+          <template x-if="tab === 'variables'">
+            <div>
+              <!-- Step dots -->
+              <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 24px;">
+                <template x-for="(s, i) in STEPS" :key="i">
+                  <button @click="goToStep(i)" 
+                          :style="i === step ? 'width: 24px; background: #4f46e5;' : (i < step ? 'width: 8px; background: #1a1a2e;' : 'width: 8px; background: #e5e7eb;')"
+                          style="height: 8px; border-radius: 999px; border: none; cursor: pointer; transition: all 0.2s; padding: 0;"></button>
+                </template>
+                <span class="sans" style="font-size: 11px; color: #9ca3af; margin-left: 4px;" x-text="`Étape ${step + 1}/${STEPS.length}`"></span>
+              </div>
+
+              <!-- Step Container -->
+              <div style="background: #fff; border-radius: 14px; border: 1.5px solid #e5e7eb; padding: 22px; margin-bottom: 14px;">
+                <h2 class="sans" style="font-size: 15px; font-weight: 700; color: #1a1a2e; margin: 0 0 4px;" x-text="STEPS[step]"></h2>
+                <div style="height: 2px; width: 28px; background: #4f46e5; border-radius: 2px; margin-bottom: 18px;"></div>
+                
+                <!-- STEP 0: NEUTRALS -->
+                <template x-if="step === 0">
+                  <div class="grid-2">
+                    <template x-for="mode in [
+                      { label: 'Normal', bgKey: 'bgLight', fgKey: 'ink', bgLabel: 'Background Light', fgLabel: 'Text (ink)', targetLead: 4.5, targetBody: 7 },
+                      { label: 'Reverse', bgKey: 'bgDark', fgKey: 'paper', bgLabel: 'Background Dark', fgLabel: 'Text inverse (paper)', targetLead: 4.5, targetBody: 7 }
+                    ]" :key="mode.label">
+                      <div>
+                        <div style="margin-bottom: 24px;">
+                          <div class="section-title" x-text="mode.label"></div>
+                          
+                          <!-- Selectors -->
+                          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                            <template x-for="field in [
+                              { key: mode.bgKey, label: mode.bgLabel },
+                              { key: mode.fgKey, label: mode.fgLabel }
+                            ]" :key="field.key">
+                              <div>
+                                <label class="sans" style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px;" x-text="field.label"></label>
+                                <div style="display: flex; gap: 6px; align-items: center;">
+                                  <input type="color" x-model="config[field.key]" style="width: 36px; height: 34px; border: none; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;" />
+                                  <input type="text" x-model="config[field.key]" class="input-base" style="flex: 1;" />
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+
+                          <!-- Previews -->
+                          <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Lead -->
+                            <div x-data="{ 
+                                   get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetLead); } 
+                                 }" 
+                                 :title="contrast.tooltip"
+                                 :style="`padding: 16px; background: ${config[mode.bgKey]}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
+                              <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${config[mode.fgKey]}; opacity: 0.5; text-transform: uppercase;`">Lead</div>
+                              <div class="sans" :style="`font-size: 24px; font-weight: 400; color: ${config[mode.fgKey]}; line-height: 1.2;`">Texte Lead principal</div>
+                              <div class="sans" :style="`font-size: 11px; color: ${config[mode.fgKey]}; opacity: 0.8;`" x-text="`AAA 4.5:1 (${contrast.ratio}:1)`"></div>
+                            </div>
+
+                            <!-- Body -->
+                            <div x-data="{ 
+                                   get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetBody); } 
+                                 }" 
+                                 :title="contrast.tooltip"
+                                 :style="`padding: 16px; background: ${config[mode.bgKey]}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
+                              <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${config[mode.fgKey]}; opacity: 0.5; text-transform: uppercase;`">Body</div>
+                              <div class="sans" :style="`font-size: 14px; font-weight: 700; color: ${config[mode.fgKey]};`">Texte principal du corps</div>
+                              <div class="sans" :style="`font-size: 13px; color: ${config[mode.fgKey]}; opacity: 0.9;`">Texte secondaire (90%)</div>
+                              <div class="sans" :style="`font-size: 12px; color: ${config[mode.fgKey]}; opacity: 0.8;`">Texte tertiaire (80%)</div>
+                              <div class="sans" :style="`font-size: 11px; color: ${config[mode.fgKey]}; opacity: 0.8; margin-top: 4px;`" x-text="`AAA 7:1 (${contrast.ratio}:1)`"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+
+                <!-- STEP 1: ACCENTS -->
+                <template x-if="step === 1">
+                  <div>
+                    <div style="margin-bottom: 24px;">
+                      <div class="section-title">Palettes d'accent</div>
+                      <template x-for="(acc, ai) in config.accents" :key="ai">
+                        <div style="margin-bottom: 14px; padding: 16px; border-radius: 10px; border: 1.5px solid #e5e7eb;">
+                          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                            <input type="text" x-model="acc.name" class="input-base" style="font-weight: 700; font-size: 13px; width: 130px;" />
+                            <template x-if="config.accents.length > 1">
+                              <button @click="removeAccent(ai)" style="font-family: inherit; margin-left: auto; padding: 3px 10px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; font-size: 11px; cursor: pointer;">Supprimer</button>
+                            </template>
+                          </div>
+                          
+                          <div class="grid-2">
+                            <template x-for="mode in [
+                              { label: 'Normal', field: 'shades', bgKey: 'bgLight', targetLead: 4.5, targetBody: 7 },
+                              { label: 'Reverse', field: 'reverseShades', bgKey: 'bgDark', targetLead: 4.5, targetBody: 7 }
+                            ]" :key="mode.label">
+                              <div>
+                                <div class="sans" style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;" x-text="mode.label"></div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+                                  <template x-for="shade in ['100', '500', '900']" :key="shade">
+                                    <div>
+                                      <div class="sans" style="font-size: 10px; color: #9ca3af; margin-bottom: 4px;" x-text="`Teinte ${shade}`"></div>
+                                      <div style="display: flex; gap: 5px; align-items: center;">
+                                        <input type="color" x-model="acc[mode.field][shade]" @input="syncReverseShades(ai, shade)" style="width: 30px; height: 28px; border: none; border-radius: 4px; cursor: pointer; padding: 2px; flex-shrink: 0;" />
+                                        <input type="text" x-model="acc[mode.field][shade]" @input="syncReverseShades(ai, shade)" class="input-base" style="flex: 1; font-size: 11px;" />
+                                      </div>
+                                    </div>
+                                  </template>
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                  <!-- Lead -->
+                                  <div x-data="{ 
+                                         get contrast() { return checkContrast(acc[mode.field]['500'], config[mode.bgKey], mode.targetLead); } 
+                                       }" 
+                                       :title="contrast.tooltip"
+                                       :style="`padding: 16px; background: ${config[mode.bgKey]}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
+                                    <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${acc[mode.field]['500']}; opacity: 0.5; text-transform: uppercase;`">Lead</div>
+                                    <div class="sans" :style="`font-size: 24px; font-weight: 400; color: ${acc[mode.field]['500']}; line-height: 1.2;`">Lead accent</div>
+                                    <div class="sans" :style="`font-size: 11px; color: ${acc[mode.field]['500']}; opacity: 0.8;`" x-text="`AAA 4.5:1 (${contrast.ratio}:1)`"></div>
+                                  </div>
+
+                                  <!-- Body -->
+                                  <div x-data="{ 
+                                         get contrast() { return checkContrast(acc[mode.field]['900'], acc[mode.field]['100'], mode.targetBody); } 
+                                       }" 
+                                       :title="contrast.tooltip"
+                                       :style="`padding: 16px; background: ${acc[mode.field]['100']}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
+                                    <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${acc[mode.field]['900']}; opacity: 0.5; text-transform: uppercase;`">Body</div>
+                                    <div class="sans" :style="`font-size: 14px; font-weight: 700; color: ${acc[mode.field]['900']};`">Texte on-brand body</div>
+                                    <div class="sans" :style="`font-size: 11px; color: ${acc[mode.field]['900']}; opacity: 0.8;`" x-text="`AAA 7:1 (${contrast.ratio}:1)`"></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+                      <button @click="addAccent()" class="sans" style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px dashed #d1d5db; background: transparent; font-size: 13px; color: #6b7280; cursor: pointer;">
+                        + Ajouter une palette
+                      </button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- STEP 2: FONTS -->
+                <template x-if="step === 2">
+                  <div>
+                    <div style="margin-bottom: 24px;">
+                      <div class="section-title">Polices de caractères</div>
+                      <template x-for="font in [
+                        { key: 'heading', label: 'Heading' },
+                        { key: 'lead', label: 'Lead' },
+                        { key: 'body', label: 'Body regular' },
+                        { key: 'body-serif', label: 'Body serif (optionnel)' },
+                        { key: 'small', label: 'Small & Meta' }
+                      ]" :key="font.key">
+                        <div style="margin-bottom: 10px;">
+                          <label class="sans" style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px;" x-text="font.label"></label>
+                          <input type="text" x-model="config.fonts[font.key]" :placeholder="font.key === 'body-serif' ? 'Laisser vide si non utilisé' : ''" class="input-base" />
+                        </div>
+                      </template>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                      <div class="section-title">Aperçu Normal / Reverse</div>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb;">
+                        <template x-for="view in [
+                          { bgKey: 'bgLight', fgKey: 'ink', label: 'Normal' },
+                          { bgKey: 'bgDark', fgKey: 'paper', label: 'Reverse' }
+                        ]" :key="view.label">
+                          <div :style="`padding: 18px; background: ${config[view.bgKey]};`">
+                            <div class="sans" :style="`font-size: 9px; font-weight: 700; color: ${config[view.fgKey]}; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;`" x-text="view.label"></div>
+                            
+                            <template x-if="config.fonts.heading">
+                              <div :style="`font-family: '${config.fonts.heading}'; font-size: 20px; color: ${config[view.fgKey]}; margin-bottom: 5px; line-height: 1.2;`">Heading</div>
+                            </template>
+                            <template x-if="config.fonts.lead">
+                              <div :style="`font-family: '${config.fonts.lead}'; font-size: 14px; color: ${config[view.fgKey]}; opacity: 0.85; margin-bottom: 4px;`">Lead</div>
+                            </template>
+                            <template x-if="config.fonts.body">
+                              <div :style="`font-family: '${config.fonts.body}'; font-size: 12px; color: ${config[view.fgKey]}; opacity: 0.7; margin-bottom: 4px;`">Body regular</div>
+                            </template>
+                            <template x-if="config.fonts['body-serif']">
+                              <div :style="`font-family: '${config.fonts['body-serif']}'; font-size: 12px; color: ${config[view.fgKey]}; opacity: 0.7; margin-bottom: 4px; font-style: italic;`">Body serif</div>
+                            </template>
+                            <template x-if="config.fonts.small">
+                              <div :style="`font-family: '${config.fonts.small}'; font-size: 10px; color: ${config[view.fgKey]}; opacity: 0.5;`">Small & Meta</div>
+                            </template>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- STEP 3: EXPORT -->
+                <template x-if="step === 3">
+                  <div>
+                    <div style="margin-bottom: 24px;">
+                      <div class="section-title">Typographie</div>
+                      <div style="padding: 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; margin-bottom: 16px;">
+                        <template x-for="[role, val] in Object.entries(config.fonts)" :key="role">
+                          <template x-if="val">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
+                              <span class="sans" style="color: #6b7280; text-transform: capitalize;" x-text="role"></span>
+                              <span class="mono" style="color: #1a1a2e; font-weight: 600; font-size: 12px;" x-text="val"></span>
+                            </div>
+                          </template>
+                        </template>
+                      </div>
+                    </div>
+                    <div style="margin-bottom: 24px;">
+                      <div class="section-title">Collections générées</div>
+                      <div style="padding: 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; margin-bottom: 16px;">
+                        <template x-for="coll in [
+                          ['01 – Primitives', '~150 variables', 'Value'],
+                          ['02 – Sémantique', '~90 variables', 'Normal / Reverse'],
+                          ['03 – Composants', '~40 variables', 'Normal / Reverse'],
+                          ['04 – Responsive', '~70 variables', 'Desktop / Tablette / Mobile / Slides']
+                        ]" :key="coll[0]">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span class="sans" style="font-size: 12px; font-weight: 700; color: #1a1a2e;" x-text="coll[0]"></span>
+                            <span class="sans" style="font-size: 11px; color: #6b7280;" x-text="`${coll[1]} · ${coll[2]}`"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                    <div style="margin-bottom: 24px;">
+                      <div class="section-title">Accents</div>
+                      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <template x-for="acc in config.accents" :key="acc.name">
+                          <div style="display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fafafa;">
+                            <div style="display: flex; gap: 2px;">
+                              <template x-for="s in ['100', '500', '900']" :key="s">
+                                <div :style="`width: 10px; height: 10px; border-radius: 2px; background: ${acc.shades[s]};`"></div>
+                              </template>
+                            </div>
+                            <span class="sans" style="font-size: 12px; color: #374151;" x-text="acc.name"></span>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                      <button class="btn-primary" style="flex: 1;" @click="setTab('components')">
+                        Enregistrer et passer aux composants →
+                      </button>
+                      <button class="btn-secondary" @click="downloadJSON()">
+                        ↓ Exporter JSON
+                      </button>
+                    </div>
+                  </div>
+                </template>
+
+              </div>
+              
+              <!-- Next / Prev Navbar -->
+              <div style="display: flex; justify-content: space-between;">
+                <button class="btn-secondary" @click="step = Math.max(0, step - 1)" :disabled="step === 0" x-show="step > 0">← Précédent</button>
+                <div x-show="step === 0" style="width: 10px;"></div> <!-- Spacer -->
+                <button class="btn-primary" @click="step = step + 1" x-show="step < STEPS.length - 1">Suivant →</button>
+              </div>
+            </div>
+          </template>
+
+          <!-- TAB: COMPONENTS -->
+          <template x-if="tab === 'components'">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <p class="sans" style="font-size: 13px; color: #6b7280; margin: 0;">Sélectionnez les composants à documenter et à inclure dans la to-do.</p>
+                <button @click="toggleSelectAllGlobal()" class="sans" style="padding: 4px 12px; border-radius: 6px; border: 1px solid #e5e7eb; background: #fafafa; font-size: 11px; color: #374151; cursor: pointer; white-space: nowrap;" x-text="totalSelected === totalCompsCount ? 'Tout désélectionner' : 'Tout sélectionner'">
+                </button>
+              </div>
+              
+              <template x-for="group in GROUPS" :key="group">
+                <div style="margin-bottom: 18px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <div class="sans" style="font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; display: flex; gap: 6px; align-items: center;">
+                      <span x-text="group"></span>
+                      <span style="font-weight: 400; color: #d1d5db;" x-text="`${selectedComponents[group].length}/${catalog[group].length}`"></span>
+                    </div>
+                    <button @click="toggleSelectAll(group)" class="sans" style="padding: 2px 10px; border-radius: 6px; border: 1px solid #e5e7eb; background: transparent; font-size: 10px; color: #6b7280; cursor: pointer;" x-text="isGroupAllSelected(group) ? 'Tout désélectionner' : 'Tout sélectionner'">
+                    </button>
+                  </div>
+                  <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: 8px;">
+                    <template x-for="comp in catalog[group]" :key="comp.id">
+                      <button @click="toggleComponent(group, comp.id)" 
+                              :style="isComponentSelected(group, comp.id) ? 'background: #f0f0ff; border-color: #4f46e5;' : 'background: #fafafa; border-color: #e5e7eb;'"
+                              style="padding: 10px 12px; border-radius: 10px; border: 1.5px solid; text-align: left; cursor: pointer; transition: all 0.12s;">
+                        <div class="sans" :style="isComponentSelected(group, comp.id) ? 'color: #4f46e5;' : 'color: #1a1a2e;'" style="font-size: 12px; font-weight: 600; margin-bottom: 2px;">
+                          <span x-show="isComponentSelected(group, comp.id)">✓ </span><span x-text="comp.name"></span>
+                        </div>
+                        <div class="sans" style="font-size: 11px; color: #9ca3af;" x-text="comp.desc"></div>
+                      </button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              
+              <div style="position: sticky; bottom: 0; background: #f9fafb; padding-top: 12px; border-top: 1px solid #e5e7eb; margin-top: 8px; display: flex; gap: 10px;">
+                <button class="btn-primary" style="flex: 1;" @click="setTab('todo')" :disabled="totalSelected === 0">
+                   Enregistrer et ouvrir la to-do (<span x-text="totalSelected"></span>) →
+                </button>
+                <button class="btn-secondary" @click="downloadSpecs()" :disabled="totalSelected === 0">
+                  ↓ Specs MD
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- TAB: TODO -->
+          <template x-if="tab === 'todo'">
+            <div>
+              <!-- Empty state -->
+              <template x-if="totalSelected === 0">
+                <div style="text-align: center; padding: 40px 20px; color: #9ca3af;">
+                  <div style="font-size: 32px; margin-bottom: 12px;">☐</div>
+                  <div class="sans" style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Aucun composant sélectionné</div>
+                  <div class="sans" style="font-size: 12px;">Allez dans <strong>Composants</strong> pour faire votre sélection.</div>
+                </div>
+              </template>
+
+              <!-- Warning state -->
+              <template x-if="totalSelected > 0 && (!variablesConfigured || !componentsConfirmed)">
+                <div style="border-radius: 10px; border: 1.5px solid #fde68a; background: #fffbeb; padding: 16px;">
+                  <div class="sans" style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">⚠️ Configuration incomplète</div>
+                  <div class="sans" style="font-size: 12px; color: #78350f; margin-bottom: 12px;">
+                    <span x-show="!variablesConfigured">Les variables n'ont pas été générées. </span>
+                    <span x-show="!componentsConfirmed">Les composants n'ont pas été confirmés. </span>
+                    Les tokens affichés seront ceux du modèle par défaut.
+                  </div>
+                  <button class="btn-primary" @click="variablesConfigured = true; componentsConfirmed = true;">Continuer avec le modèle par défaut</button>
+                </div>
+              </template>
+
+              <!-- Todo list details -->
+              <template x-if="totalSelected > 0 && variablesConfigured && componentsConfirmed">
+                <div x-data="{
+                    get groupsWithComps() {
+                        return this.GROUPS.map(g => ({
+                          group: g,
+                          comps: (this.selectedComponents[g] || []).map(id => this.allComps.find(c => c.id === id)).filter(Boolean)
+                        })).filter(o => o.comps.length > 0);
+                    },
+                    get cat() {
+                        const idx = Math.min(this.todoCategoryIdx, this.groupsWithComps.length - 1);
+                        return this.groupsWithComps[idx];
+                    },
+                    get catItems() {
+                        return this.cat.comps.flatMap(c => buildTodoItems(c));
+                    },
+                    get catDone() {
+                        const count = this.getCompletedCount(this.catItems);
+                        return count === this.catItems.length && this.catItems.length > 0;
+                    },
+                    get globalStats() {
+                        return this.getGlobalTodoProgress();
+                    }
+                }">
+                  <div>
+                    <!-- Global Progress -->
+                    <div style="padding: 12px 16px; border-radius: 10px; background: #f8fafc; border: 1px solid #e5e7eb; margin-bottom: 16px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="sans" style="font-size: 11px; font-weight: 700; color: #374151;">Progression globale</span>
+                        <span class="sans" style="font-size: 11px; font-weight: 700; color: #4f46e5;" x-text="`${globalStats.percent}% (${globalStats.done}/${globalStats.total})`"></span>
+                      </div>
+                      <div style="display: flex; gap: 4px;">
+                        <template x-for="(gwc, i) in groupsWithComps" :key="gwc.group">
+                          <button @click="todoCategoryIdx = i" 
+                                  :title="gwc.group"
+                                  :style="todoCategoryIdx === i ? 'background: #4f46e5; outline: 2px solid #818cf8; outline-offset: 2px;' : 'background: #e5e7eb; outline: none;'"
+                                  style="flex: 1; height: 6px; border-radius: 999px; border: none; cursor: pointer; padding: 0; transition: all 0.2s;">
+                          </button>
+                        </template>
+                      </div>
+                    </div>
+
+                    <!-- Category header -->
+                    <div style="margin-bottom: 16px;">
+                      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                        <h2 class="sans" :style="catDone ? 'color: #16a34a;' : 'color: #1a1a2e;'" style="font-size: 18px; font-weight: 800; margin: 0;" x-text="cat.group"></h2>
+                        <span class="sans" style="font-size: 12px; color: #6b7280;" x-text="`${getCompletedCount(catItems)} / ${catItems.length} propriétés cochées`"></span>
+                      </div>
+                      <template x-if="catDone">
+                        <div class="sans" style="font-size: 12px; color: #16a34a; margin-top: 4px;">✓ Catégorie complète</div>
+                      </template>
+                    </div>
+
+                    <!-- Category nav pills -->
+                    <div style="display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;">
+                      <template x-for="(gwc, i) in groupsWithComps" :key="gwc.group">
+                        <button @click="todoCategoryIdx = i"
+                                :style="i === todoCategoryIdx ? 'background: #1a1a2e; color: #fff; border-color: #1a1a2e;' : 'background: transparent; color: #6b7280; border-color: #e5e7eb;'"
+                                class="sans" style="padding: 4px 12px; border-radius: 999px; border: 1.5px solid; font-size: 11px; font-weight: 600; cursor: pointer;">
+                          <span x-text="gwc.group"></span>
+                        </button>
+                      </template>
+                    </div>
+
+                    <!-- Components current category list -->
+                    <template x-for="comp in cat.comps" :key="comp.id">
+                      <div x-data="{
+                        get items() { return buildTodoItems(comp); },
+                        get compDone() { return getCompletedCount(this.items); },
+                        get isCompDone() { return this.compDone === this.items.length; },
+                        toggleAll() {
+                           const allChecked = this.items.every(it => todoChecked[it.id]);
+                           this.items.forEach(it => { todoChecked[it.id] = !allChecked; });
+                        }
+                      }" :style="isCompDone ? 'border-color: #bbf7d0; background: #f0fdf4;' : 'border-color: #e5e7eb; background: #fff;'"
+                         style="margin-bottom: 12px; border-radius: 10px; border: 1.5px solid; overflow: hidden;">
+                        
+                        <div :style="isCompDone ? 'border-bottom-color: #bbf7d0;' : 'border-bottom-color: #f3f4f6;'" style="padding: 10px 14px; border-bottom: 1px solid; display: flex; align-items: center; gap: 10px;">
+                          <div :style="isCompDone ? 'border-color: #16a34a; background: #16a34a;' : 'border-color: #d1d5db; background: transparent;'" style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; flex-shrink: 0;">
+                            <span x-show="isCompDone">✓</span>
+                          </div>
+                          <div style="flex: 1;">
+                            <div class="sans" style="font-size: 13px; font-weight: 700; color: #1a1a2e;" x-text="comp.name"></div>
+                            <div class="sans" style="font-size: 11px; color: #6b7280;" x-text="`${compDone}/${items.length} propriétés`"></div>
+                          </div>
+                          <button @click="toggleAll()" class="sans" style="padding: 3px 10px; border-radius: 6px; border: 1px solid #e5e7eb; background: transparent; font-size: 10px; color: #6b7280; cursor: pointer;"
+                                  x-text="items.every(it => todoChecked[it.id]) ? 'Tout décocher' : 'Tout cocher'"></button>
+                        </div>
+                        
+                        <div style="padding: 10px 14px;">
+                          <template x-for="item in items" :key="item.id">
+                            <label :style="item.level === 2 ? 'padding-left: 24px;' : 'padding-left: 0;'" style="display: flex; align-items: center; gap: 8px; margin-bottom: 7px; cursor: pointer;">
+                              <input type="checkbox" @change="toggleTodoItem(item.id)" :checked="todoChecked[item.id]" style="accent-color: #4f46e5; flex-shrink: 0; width: 14px; height: 14px;" />
+                              <span :class="item.level === 2 ? 'mono' : 'sans'" :style="item.level === 2 ? 'font-size: 11px;' : 'font-size: 12px;'" style="font-weight: 400; color: #1a1a2e; line-height: 1.3;"
+                                    :style="todoChecked[item.id] ? 'color: #9ca3af; text-decoration: line-through;' : (item.isState ? 'font-weight: 700; color: #1a1a2e;' : 'color: #1a1a2e;')">
+                                <span x-text="item.label"></span>
+                                <template x-if="item.var">
+                                  <span class="mono" style="font-size: 10px; color: #9ca3af; margin-left: 8px;" x-text="`→ ${item.var}`"></span>
+                                </template>
+                              </span>
+                            </label>
+                          </template>
+                        </div>
+                      </div>
+                    </template>
+
+                    <!-- Nav prev/next + export -->
+                    <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
+                      <button class="btn-secondary" @click="todoCategoryIdx = Math.max(0, todoCategoryIdx - 1)" :disabled="todoCategoryIdx === 0" style="padding: 8px 14px;">← Préc.</button>
+                      <button class="btn-primary" @click="todoCategoryIdx = Math.min(groupsWithComps.length - 1, todoCategoryIdx + 1)" :disabled="todoCategoryIdx === groupsWithComps.length - 1" style="flex: 1;">
+                        <span x-text="todoCategoryIdx < groupsWithComps.length - 1 ? `Suivant : ${groupsWithComps[todoCategoryIdx + 1].group} →` : 'Terminé'"></span>
+                      </button>
+                      <button class="btn-secondary" @click="downloadTodo()" style="padding: 8px 14px;">↓ MD</button>
+                    </div>
+
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+        </div>
+      </div>
+      
+    </div>
   </body>
 </html>
