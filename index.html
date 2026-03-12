@@ -5,9 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Figma DS Generator — Design System Wizard</title>
     <meta name="description" content="Générez vos variables Figma et documentez vos composants design system en quelques étapes." />
+    
+    <!-- Tailwind Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                primary: '#4f46e5',
+                dark: '#1a1a2e',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+              mono: ['SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    
     <link rel="stylesheet" href="./assets/style.css">
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192.png">
+    
     <script type="module" src="./assets/app.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
@@ -20,31 +43,44 @@
         });
       }
     </script>
+    <style type="text/tailwindcss">
+      @layer base {
+        body { @apply bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col; }
+      }
+      @layer components {
+        .input-base { @apply w-full px-3 py-1.5 text-xs font-mono border-2 border-slate-200 rounded-lg bg-white outline-none focus:border-brand-primary transition-colors; }
+        .btn-primary { @apply px-4 py-2 bg-brand-primary text-white text-sm font-bold rounded-lg hover:opacity-90 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed transition-all; }
+        .btn-secondary { @apply px-4 py-2 bg-white text-slate-700 text-sm font-semibold border-2 border-slate-200 rounded-lg hover:border-slate-300 disabled:text-slate-300 disabled:cursor-not-allowed transition-all; }
+      }
+      [x-cloak] { display: none !important; }
+    </style>
   </head>
-  <body x-data="dsWizard">
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; background: #f9fafb; display: flex; flex-direction: column;">
-      
-      <!-- Top bar -->
-      <div style="background: #1a1a2e; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; min-height: 52px; flex-shrink: 0;">
-        <div>
-          <div style="font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.01em;">Figma DS Generator</div>
-          <div style="font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em;">Design System Wizard</div>
-        </div>
-        <div style="display: flex; gap: 2px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 3px;">
-          <template x-for="t in [{ id: 'variables', label: 'Variables' }, { id: 'components', label: 'Composants' }, { id: 'todo', label: 'To-do' }]" :key="t.id">
-            <button @click="setTab(t.id)" 
-                    :style="tab === t.id ? 'background: #fff; color: #1a1a2e;' : 'background: transparent; color: rgba(255,255,255,0.55);'"
-                    style="font-family: inherit; padding: 5px 16px; border-radius: 7px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s;">
-              <span x-text="t.label"></span>
-              <template x-if="t.id === 'todo' && totalSelected > 0">
-                <span :style="tab === 'todo' ? 'background: #4f46e5; color: #fff;' : 'background: rgba(255,255,255,0.15); color: #fff;'"
-                      style="margin-left: 5px; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 999px;"
-                      x-text="totalSelected"></span>
-              </template>
-            </button>
-          </template>
-        </div>
+  <body x-data="dsWizard" x-cloak>
+    <!-- Top bar -->
+    <header class="bg-brand-dark px-5 flex items-center justify-between min-h-[52px] shrink-0 shadow-lg z-10">
+      <div class="flex flex-col">
+        <span class="text-[13px] font-bold text-white tracking-tight">Figma DS Generator</span>
+        <span class="text-[9px] text-white/35 uppercase tracking-widest font-medium">Design System Wizard</span>
       </div>
+      
+      <nav class="flex gap-1 bg-white/10 rounded-xl p-1">
+        <template x-for="t in [{ id: 'variables', label: 'Variables' }, { id: 'components', label: 'Composants' }, { id: 'todo', label: 'To-do' }]" :key="t.id">
+          <button @click="setTab(t.id)" 
+                  class="relative px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-2 group"
+                  :class="tab === t.id ? 'bg-white text-brand-dark shadow-sm' : 'text-white/60 hover:text-white hover:bg-white/5'">
+            <span x-text="t.label"></span>
+            <template x-if="t.id === 'todo' && totalSelected > 0">
+              <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors"
+                    :class="tab === 'todo' ? 'bg-brand-primary text-white' : 'bg-white/20 text-white group-hover:bg-white/30'"
+                    x-text="totalSelected"></span>
+            </template>
+          </button>
+        </template>
+      </nav>
+    </header>
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-3xl mx-auto px-4 py-8">
 
       <!-- Content -->
       <div style="flex: 1; overflow-y: auto;">
@@ -52,74 +88,80 @@
           
           <!-- TAB: VARIABLES -->
           <template x-if="tab === 'variables'">
-            <div>
+            <div class="space-y-6">
               <!-- Step dots -->
-              <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 24px;">
+              <div class="flex gap-2 items-center mb-8">
                 <template x-for="(s, i) in STEPS" :key="i">
                   <button @click="goToStep(i)" 
-                          :style="i === step ? 'width: 24px; background: #4f46e5;' : (i < step ? 'width: 8px; background: #1a1a2e;' : 'width: 8px; background: #e5e7eb;')"
-                          style="height: 8px; border-radius: 999px; border: none; cursor: pointer; transition: all 0.2s; padding: 0;"></button>
+                          class="h-2 rounded-full transition-all duration-300"
+                          :class="i === step ? 'w-8 bg-brand-primary' : (i < step ? 'w-2 bg-brand-dark' : 'w-2 bg-slate-200 hover:bg-slate-300')">
+                  </button>
                 </template>
-                <span class="sans" style="font-size: 11px; color: #9ca3af; margin-left: 4px;" x-text="`Étape ${step + 1}/${STEPS.length}`"></span>
+                <span class="text-xs font-semibold text-slate-400 ml-2" x-text="`Étape ${step + 1}/${STEPS.length}`"></span>
               </div>
 
               <!-- Step Container -->
-              <div style="background: #fff; border-radius: 14px; border: 1.5px solid #e5e7eb; padding: 22px; margin-bottom: 14px;">
-                <h2 class="sans" style="font-size: 15px; font-weight: 700; color: #1a1a2e; margin: 0 0 4px;" x-text="STEPS[step]"></h2>
-                <div style="height: 2px; width: 28px; background: #4f46e5; border-radius: 2px; margin-bottom: 18px;"></div>
+              <section class="bg-white rounded-2xl border-2 border-slate-100 p-8 shadow-sm">
+                <div class="mb-6">
+                  <h2 class="text-lg font-extrabold text-brand-dark leading-tight" x-text="STEPS[step]"></h2>
+                  <div class="h-1 w-10 bg-brand-primary rounded-full mt-2"></div>
+                </div>
                 
                 <!-- STEP 0: NEUTRALS -->
                 <template x-if="step === 0">
-                  <div class="grid-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <template x-for="mode in [
                       { label: 'Normal', bgKey: 'bgLight', fgKey: 'ink', bgLabel: 'Background Light', fgLabel: 'Text (ink)', targetLead: 4.5, targetBody: 7 },
                       { label: 'Reverse', bgKey: 'bgDark', fgKey: 'paper', bgLabel: 'Background Dark', fgLabel: 'Text inverse (paper)', targetLead: 4.5, targetBody: 7 }
                     ]" :key="mode.label">
-                      <div>
-                        <div style="margin-bottom: 24px;">
-                          <div class="section-title" x-text="mode.label"></div>
-                          
-                          <!-- Selectors -->
-                          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                            <template x-for="field in [
-                              { key: mode.bgKey, label: mode.bgLabel },
-                              { key: mode.fgKey, label: mode.fgLabel }
-                            ]" :key="field.key">
-                              <div>
-                                <label class="sans" style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px;" x-text="field.label"></label>
-                                <div style="display: flex; gap: 6px; align-items: center;">
-                                  <input type="color" x-model="config[field.key]" style="width: 36px; height: 34px; border: none; border-radius: 6px; cursor: pointer; padding: 2px; flex-shrink: 0;" />
-                                  <input type="text" x-model="config[field.key]" class="input-base" style="flex: 1;" />
+                      <div class="space-y-6">
+                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4" x-text="mode.label"></h3>
+                        
+                        <!-- Selectors -->
+                        <div class="space-y-4">
+                          <template x-for="field in [
+                            { key: mode.bgKey, label: mode.bgLabel },
+                            { key: mode.fgKey, label: mode.fgLabel }
+                          ]" :key="field.key">
+                            <div class="space-y-1.5">
+                              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider" x-text="field.label"></label>
+                              <div class="flex gap-2">
+                                <div class="relative w-10 h-10 shrink-0">
+                                  <input type="color" x-model="config[field.key]" class="absolute inset-0 w-full h-full p-0 border-none rounded-lg cursor-pointer bg-transparent overflow-hidden" />
+                                  <div class="w-full h-full rounded-lg border-2 border-slate-100 shadow-inner" :style="`background: ${config[field.key]}`"></div>
                                 </div>
+                                <input type="text" x-model="config[field.key]" class="input-base !text-sm flex-1" />
                               </div>
-                            </template>
+                            </div>
+                          </template>
+                        </div>
+
+                        <!-- Previews -->
+                        <div class="space-y-3">
+                          <!-- Lead -->
+                          <div x-data="{ 
+                                 get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetLead); } 
+                               }" 
+                               class="p-5 rounded-xl border-2 transition-all duration-300"
+                               :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}; shadow: ${contrast.isOk ? 'none' : '0 0 0 4px rgba(239, 68, 68, 0.1)'}`"
+                               :title="contrast.tooltip">
+                            <div class="text-[9px] font-black uppercase tracking-widest mb-1 opacity-50" :style="`color: ${config[mode.fgKey]}`">Lead</div>
+                            <div class="text-2xl font-medium leading-tight mb-2" :style="`color: ${config[mode.fgKey]}`">Texte Lead principal</div>
+                            <div class="text-[10px] font-bold opacity-60" :style="`color: ${config[mode.fgKey]}`" x-text="`AAA 4.5:1 (${contrast.ratio}:1)`"></div>
                           </div>
 
-                          <!-- Previews -->
-                          <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <!-- Lead -->
-                            <div x-data="{ 
-                                   get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetLead); } 
-                                 }" 
-                                 :title="contrast.tooltip"
-                                 :style="`padding: 16px; background: ${config[mode.bgKey]}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
-                              <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${config[mode.fgKey]}; opacity: 0.5; text-transform: uppercase;`">Lead</div>
-                              <div class="sans" :style="`font-size: 24px; font-weight: 400; color: ${config[mode.fgKey]}; line-height: 1.2;`">Texte Lead principal</div>
-                              <div class="sans" :style="`font-size: 11px; color: ${config[mode.fgKey]}; opacity: 0.8;`" x-text="`AAA 4.5:1 (${contrast.ratio}:1)`"></div>
-                            </div>
-
-                            <!-- Body -->
-                            <div x-data="{ 
-                                   get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetBody); } 
-                                 }" 
-                                 :title="contrast.tooltip"
-                                 :style="`padding: 16px; background: ${config[mode.bgKey]}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
-                              <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${config[mode.fgKey]}; opacity: 0.5; text-transform: uppercase;`">Body</div>
-                              <div class="sans" :style="`font-size: 14px; font-weight: 700; color: ${config[mode.fgKey]};`">Texte principal du corps</div>
-                              <div class="sans" :style="`font-size: 13px; color: ${config[mode.fgKey]}; opacity: 0.9;`">Texte secondaire (90%)</div>
-                              <div class="sans" :style="`font-size: 12px; color: ${config[mode.fgKey]}; opacity: 0.8;`">Texte tertiaire (80%)</div>
-                              <div class="sans" :style="`font-size: 11px; color: ${config[mode.fgKey]}; opacity: 0.8; margin-top: 4px;`" x-text="`AAA 7:1 (${contrast.ratio}:1)`"></div>
-                            </div>
+                          <!-- Body -->
+                          <div x-data="{ 
+                                 get contrast() { return checkContrast(config[mode.fgKey], config[mode.bgKey], mode.targetBody); } 
+                               }" 
+                               class="p-5 rounded-xl border-2 transition-all duration-300"
+                               :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}; shadow: ${contrast.isOk ? 'none' : '0 0 0 4px rgba(239, 68, 68, 0.1)'}`"
+                               :title="contrast.tooltip">
+                            <div class="text-[9px] font-black uppercase tracking-widest mb-1 opacity-50" :style="`color: ${config[mode.fgKey]}`">Body</div>
+                            <div class="text-sm font-bold mb-1" :style="`color: ${config[mode.fgKey]}`">Texte principal du corps</div>
+                            <div class="text-[13px] opacity-90" :style="`color: ${config[mode.fgKey]}`">Texte secondaire (90%)</div>
+                            <div class="text-xs opacity-80" :style="`color: ${config[mode.fgKey]}`">Texte tertiaire (80%)</div>
+                            <div class="text-[10px] font-bold mt-3 opacity-60" :style="`color: ${config[mode.fgKey]}`" x-text="`AAA 7:1 (${contrast.ratio}:1)`"></div>
                           </div>
                         </div>
                       </div>
@@ -129,116 +171,127 @@
 
                 <!-- STEP 1: ACCENTS -->
                 <template x-if="step === 1">
-                  <div>
-                    <div style="margin-bottom: 24px;">
-                      <div class="section-title">Palettes d'accent</div>
-                      <template x-for="(acc, ai) in config.accents" :key="ai">
-                        <div style="margin-bottom: 14px; padding: 16px; border-radius: 10px; border: 1.5px solid #e5e7eb;">
-                          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-                            <input type="text" x-model="acc.name" class="input-base" style="font-weight: 700; font-size: 13px; width: 130px;" />
-                            <template x-if="config.accents.length > 1">
-                              <button @click="removeAccent(ai)" style="font-family: inherit; margin-left: auto; padding: 3px 10px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; font-size: 11px; cursor: pointer;">Supprimer</button>
-                            </template>
+                  <div class="space-y-6">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Palettes d'accent</h3>
+                    
+                    <template x-for="(acc, ai) in config.accents" :key="ai">
+                      <div class="p-6 rounded-2xl border-2 border-slate-100 space-y-6 relative overflow-hidden group/acc">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-3">
+                            <div class="w-2 h-6 bg-brand-primary rounded-full"></div>
+                            <input type="text" x-model="acc.name" class="input-base !text-sm !font-bold w-48 border-transparent hover:border-slate-100 focus:border-brand-primary bg-transparent" />
                           </div>
-                          
-                          <div class="grid-2">
-                            <template x-for="mode in [
-                              { label: 'Normal', field: 'shades', bgKey: 'bgLight', targetLead: 4.5, targetBody: 7 },
-                              { label: 'Reverse', field: 'reverseShades', bgKey: 'bgDark', targetLead: 4.5, targetBody: 7 }
-                            ]" :key="mode.label">
-                              <div>
-                                <div class="sans" style="font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;" x-text="mode.label"></div>
-                                
-                                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
-                                  <template x-for="shade in ['100', '500', '900']" :key="shade">
-                                    <div>
-                                      <div class="sans" style="font-size: 10px; color: #9ca3af; margin-bottom: 4px;" x-text="`Teinte ${shade}`"></div>
-                                      <div style="display: flex; gap: 5px; align-items: center;">
-                                        <input type="color" x-model="acc[mode.field][shade]" @input="syncReverseShades(ai, shade)" style="width: 30px; height: 28px; border: none; border-radius: 4px; cursor: pointer; padding: 2px; flex-shrink: 0;" />
-                                        <input type="text" x-model="acc[mode.field][shade]" @input="syncReverseShades(ai, shade)" class="input-base" style="flex: 1; font-size: 11px;" />
+                          <template x-if="config.accents.length > 1">
+                            <button @click="removeAccent(ai)" class="px-3 py-1.5 rounded-lg text-[10px] font-bold text-red-500 bg-red-50 hover:bg-red-100 transition-colors uppercase tracking-wider">Supprimer</button>
+                          </template>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <template x-for="mode in [
+                            { label: 'Normal', field: 'shades', bgKey: 'bgLight', targetLead: 4.5, targetBody: 7 },
+                            { label: 'Reverse', field: 'reverseShades', bgKey: 'bgDark', targetLead: 4.5, targetBody: 7 }
+                          ]" :key="mode.label">
+                            <div class="space-y-5">
+                              <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400" x-text="mode.label"></h4>
+                              
+                              <div class="space-y-4">
+                                <template x-for="shade in ['100', '500', '900']" :key="shade">
+                                  <div class="space-y-1">
+                                    <span class="text-[10px] text-slate-400 font-bold uppercase" x-text="`Teinte ${shade}`"></span>
+                                    <div class="flex gap-2">
+                                      <div class="relative w-8 h-8 shrink-0">
+                                        <input type="color" x-model="acc[mode.field][shade]" @input="syncReverseShades(ai, shade)" class="absolute inset-0 w-full h-full p-0 border-none rounded-md cursor-pointer bg-transparent overflow-hidden" />
+                                        <div class="w-full h-full rounded-md border-2 border-slate-100 shadow-inner" :style="`background: ${acc[mode.field][shade]}`"></div>
                                       </div>
+                                      <input type="text" x-model="acc[mode.field][shade]" @input="syncReverseShades(ai, shade)" class="input-base !text-xs flex-1" />
                                     </div>
-                                  </template>
+                                  </div>
+                                </template>
+                              </div>
+                              
+                              <div class="space-y-3">
+                                <!-- Lead -->
+                                <div x-data="{ 
+                                       get contrast() { return checkContrast(acc[mode.field]['500'], config[mode.bgKey], mode.targetLead); } 
+                                     }" 
+                                     class="p-4 rounded-xl border-2 transition-all duration-300"
+                                     :style="`background: ${config[mode.bgKey]}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}; shadow: ${contrast.isOk ? 'none' : '0 0 0 4px rgba(239, 68, 68, 0.1)'}`"
+                                     :title="contrast.tooltip">
+                                  <div class="text-[9px] font-black uppercase tracking-widest mb-1 opacity-50" :style="`color: ${acc[mode.field]['500']}`">Lead</div>
+                                  <div class="text-xl font-medium leading-tight mb-2" :style="`color: ${acc[mode.field]['500']}`">Lead accent</div>
+                                  <div class="text-[10px] font-bold opacity-60" :style="`color: ${acc[mode.field]['500']}`" x-text="`AAA 4.5:1 (${contrast.ratio}:1)`"></div>
                                 </div>
-                                
-                                <div style="display: flex; flex-direction: column; gap: 10px;">
-                                  <!-- Lead -->
-                                  <div x-data="{ 
-                                         get contrast() { return checkContrast(acc[mode.field]['500'], config[mode.bgKey], mode.targetLead); } 
-                                       }" 
-                                       :title="contrast.tooltip"
-                                       :style="`padding: 16px; background: ${config[mode.bgKey]}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
-                                    <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${acc[mode.field]['500']}; opacity: 0.5; text-transform: uppercase;`">Lead</div>
-                                    <div class="sans" :style="`font-size: 24px; font-weight: 400; color: ${acc[mode.field]['500']}; line-height: 1.2;`">Lead accent</div>
-                                    <div class="sans" :style="`font-size: 11px; color: ${acc[mode.field]['500']}; opacity: 0.8;`" x-text="`AAA 4.5:1 (${contrast.ratio}:1)`"></div>
-                                  </div>
 
-                                  <!-- Body -->
-                                  <div x-data="{ 
-                                         get contrast() { return checkContrast(acc[mode.field]['900'], acc[mode.field]['100'], mode.targetBody); } 
-                                       }" 
-                                       :title="contrast.tooltip"
-                                       :style="`padding: 16px; background: ${acc[mode.field]['100']}; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; border: 2px solid ${contrast.isOk ? 'transparent' : '#ef4444'}; transition: all 0.2s;`">
-                                    <div class="sans" :style="`font-size: 10px; font-weight: 700; color: ${acc[mode.field]['900']}; opacity: 0.5; text-transform: uppercase;`">Body</div>
-                                    <div class="sans" :style="`font-size: 14px; font-weight: 700; color: ${acc[mode.field]['900']};`">Texte on-brand body</div>
-                                    <div class="sans" :style="`font-size: 11px; color: ${acc[mode.field]['900']}; opacity: 0.8;`" x-text="`AAA 7:1 (${contrast.ratio}:1)`"></div>
-                                  </div>
+                                <!-- Body -->
+                                <div x-data="{ 
+                                       get contrast() { return checkContrast(acc[mode.field]['900'], acc[mode.field]['100'], mode.targetBody); } 
+                                     }" 
+                                     class="p-4 rounded-xl border-2 transition-all duration-300"
+                                     :style="`background: ${acc[mode.field]['100']}; border-color: ${contrast.isOk ? 'transparent' : '#ef4444'}; shadow: ${contrast.isOk ? 'none' : '0 0 0 4px rgba(239, 68, 68, 0.1)'}`"
+                                     :title="contrast.tooltip">
+                                  <div class="text-[9px] font-black uppercase tracking-widest mb-1 opacity-50" :style="`color: ${acc[mode.field]['900']}`">Body</div>
+                                  <div class="text-sm font-bold" :style="`color: ${acc[mode.field]['900']}`">Texte on-brand body</div>
+                                  <div class="text-[10px] font-bold mt-2 opacity-60" :style="`color: ${acc[mode.field]['900']}`" x-text="`AAA 7:1 (${contrast.ratio}:1)`"></div>
                                 </div>
                               </div>
-                            </template>
-                          </div>
+                            </div>
+                          </template>
                         </div>
-                      </template>
-                      <button @click="addAccent()" class="sans" style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px dashed #d1d5db; background: transparent; font-size: 13px; color: #6b7280; cursor: pointer;">
-                        + Ajouter une palette
-                      </button>
-                    </div>
+                      </div>
+                    </template>
+                    
+                    <button @click="addAccent()" class="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold hover:border-brand-primary hover:text-brand-primary hover:bg-brand-primary/5 transition-all">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                      Ajouter une palette d'accent
+                    </button>
                   </div>
                 </template>
 
                 <!-- STEP 2: FONTS -->
                 <template x-if="step === 2">
-                  <div>
-                    <div style="margin-bottom: 24px;">
-                      <div class="section-title">Polices de caractères</div>
-                      <template x-for="font in [
-                        { key: 'heading', label: 'Heading' },
-                        { key: 'lead', label: 'Lead' },
-                        { key: 'body', label: 'Body regular' },
-                        { key: 'body-serif', label: 'Body serif (optionnel)' },
-                        { key: 'small', label: 'Small & Meta' }
-                      ]" :key="font.key">
-                        <div style="margin-bottom: 10px;">
-                          <label class="sans" style="font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px;" x-text="font.label"></label>
-                          <input type="text" x-model="config.fonts[font.key]" :placeholder="font.key === 'body-serif' ? 'Laisser vide si non utilisé' : ''" class="input-base" />
-                        </div>
-                      </template>
+                  <div class="space-y-8">
+                    <div class="space-y-4">
+                      <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Polices de caractères</h3>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="font in [
+                          { key: 'heading', label: 'Heading' },
+                          { key: 'lead', label: 'Lead' },
+                          { key: 'body', label: 'Body regular' },
+                          { key: 'body-serif', label: 'Body serif (optionnel)' },
+                          { key: 'small', label: 'Small & Meta' }
+                        ]" :key="font.key">
+                          <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider" x-text="font.label"></label>
+                            <input type="text" x-model="config.fonts[font.key]" :placeholder="font.key === 'body-serif' ? 'Laisser vide si non utilisé' : ''" class="input-base !text-sm" />
+                          </div>
+                        </template>
+                      </div>
                     </div>
                     
-                    <div style="margin-bottom: 24px;">
-                      <div class="section-title">Aperçu Normal / Reverse</div>
-                      <div style="display: grid; grid-template-columns: 1fr 1fr; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb;">
+                    <div class="space-y-4">
+                      <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Aperçu Normal / Reverse</h3>
+                      <div class="grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden border-2 border-slate-100 divide-x-2 divide-slate-100">
                         <template x-for="view in [
                           { bgKey: 'bgLight', fgKey: 'ink', label: 'Normal' },
                           { bgKey: 'bgDark', fgKey: 'paper', label: 'Reverse' }
                         ]" :key="view.label">
-                          <div :style="`padding: 18px; background: ${config[view.bgKey]};`">
-                            <div class="sans" :style="`font-size: 9px; font-weight: 700; color: ${config[view.fgKey]}; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;`" x-text="view.label"></div>
+                          <div class="p-8 space-y-6" :style="`background: ${config[view.bgKey]};`">
+                            <div class="text-[9px] font-black uppercase tracking-widest opacity-40 mb-4" :style="`color: ${config[view.fgKey]}`" x-text="view.label"></div>
                             
                             <template x-if="config.fonts.heading">
-                              <div :style="`font-family: '${config.fonts.heading}'; font-size: 20px; color: ${config[view.fgKey]}; margin-bottom: 5px; line-height: 1.2;`">Heading</div>
+                              <div class="text-3xl leading-tight" :style="`font-family: '${config.fonts.heading}'; color: ${config[view.fgKey]}`">Heading</div>
                             </template>
                             <template x-if="config.fonts.lead">
-                              <div :style="`font-family: '${config.fonts.lead}'; font-size: 14px; color: ${config[view.fgKey]}; opacity: 0.85; margin-bottom: 4px;`">Lead</div>
+                              <div class="text-lg opacity-85" :style="`font-family: '${config.fonts.lead}'; color: ${config[view.fgKey]}`">Lead</div>
                             </template>
                             <template x-if="config.fonts.body">
-                              <div :style="`font-family: '${config.fonts.body}'; font-size: 12px; color: ${config[view.fgKey]}; opacity: 0.7; margin-bottom: 4px;`">Body regular</div>
+                              <div class="text-sm opacity-70" :style="`font-family: '${config.fonts.body}'; color: ${config[view.fgKey]}`">Body regular</div>
                             </template>
                             <template x-if="config.fonts['body-serif']">
-                              <div :style="`font-family: '${config.fonts['body-serif']}'; font-size: 12px; color: ${config[view.fgKey]}; opacity: 0.7; margin-bottom: 4px; font-style: italic;`">Body serif</div>
+                              <div class="text-sm opacity-70 italic" :style="`font-family: '${config.fonts['body-serif']}'; color: ${config[view.fgKey]}`">Body serif</div>
                             </template>
                             <template x-if="config.fonts.small">
-                              <div :style="`font-family: '${config.fonts.small}'; font-size: 10px; color: ${config[view.fgKey]}; opacity: 0.5;`">Small & Meta</div>
+                              <div class="text-[10px] opacity-50 uppercase tracking-wider font-bold" :style="`font-family: '${config.fonts.small}'; color: ${config[view.fgKey]}`">Small & Meta</div>
                             </template>
                           </div>
                         </template>
@@ -249,140 +302,178 @@
 
                 <!-- STEP 3: EXPORT -->
                 <template x-if="step === 3">
-                  <div>
-                    <div style="margin-bottom: 24px;">
-                      <div class="section-title">Typographie</div>
-                      <div style="padding: 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; margin-bottom: 16px;">
-                        <template x-for="[role, val] in Object.entries(config.fonts)" :key="role">
-                          <template x-if="val">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px;">
-                              <span class="sans" style="color: #6b7280; text-transform: capitalize;" x-text="role"></span>
-                              <span class="mono" style="color: #1a1a2e; font-weight: 600; font-size: 12px;" x-text="val"></span>
-                            </div>
-                          </template>
-                        </template>
-                      </div>
-                    </div>
-                    <div style="margin-bottom: 24px;">
-                      <div class="section-title">Collections générées</div>
-                      <div style="padding: 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; margin-bottom: 16px;">
-                        <template x-for="coll in [
-                          ['01 – Primitives', '~150 variables', 'Value'],
-                          ['02 – Sémantique', '~90 variables', 'Normal / Reverse'],
-                          ['03 – Composants', '~40 variables', 'Normal / Reverse'],
-                          ['04 – Responsive', '~70 variables', 'Desktop / Tablette / Mobile / Slides']
-                        ]" :key="coll[0]">
-                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span class="sans" style="font-size: 12px; font-weight: 700; color: #1a1a2e;" x-text="coll[0]"></span>
-                            <span class="sans" style="font-size: 11px; color: #6b7280;" x-text="`${coll[1]} · ${coll[2]}`"></span>
+                  <div class="space-y-8">
+                    <div>
+                      <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Résumé des ressources</h3>
+                      
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Fonts summary -->
+                        <div class="p-6 rounded-2xl border-2 border-slate-100 bg-slate-50/50 space-y-4">
+                           <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Typographie</h4>
+                           <div class="space-y-2">
+                             <template x-for="[role, val] in Object.entries(config.fonts)" :key="role">
+                               <template x-if="val">
+                                 <div class="flex justify-between items-center text-xs border-b border-slate-200/50 pb-2 last:border-0 last:pb-0">
+                                   <span class="text-slate-500 font-medium capitalize" x-text="role"></span>
+                                   <span class="text-brand-dark font-mono font-bold" x-text="val"></span>
+                                 </div>
+                               </template>
+                             </template>
+                           </div>
+                        </div>
+
+                        <!-- Variables overview -->
+                        <div class="p-6 rounded-2xl border-2 border-slate-100 bg-slate-50/50 space-y-4">
+                          <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Collections</h4>
+                          <div class="space-y-2 text-[11px]">
+                            <template x-for="coll in [
+                              ['01 – Primitives', '150 variables', 'Value'],
+                              ['02 – Sémantique', '90 variables', 'N / R'],
+                              ['03 – Composants', '40 variables', 'N / R'],
+                              ['04 – Responsive', '70 variables', 'Flex']
+                            ]" :key="coll[0]">
+                              <div class="flex justify-between items-center">
+                                <span class="text-brand-dark font-bold truncate" x-text="coll[0]"></span>
+                                <span class="text-slate-400 font-medium shrink-0 ml-2" x-text="`${coll[1]}`"></span>
+                              </div>
+                            </template>
                           </div>
-                        </template>
+                        </div>
                       </div>
                     </div>
-                    <div style="margin-bottom: 24px;">
-                      <div class="section-title">Accents</div>
-                      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+
+                    <div>
+                      <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Accents configurés</h3>
+                      <div class="flex gap-2 flex-wrap">
                         <template x-for="acc in config.accents" :key="acc.name">
-                          <div style="display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fafafa;">
-                            <div style="display: flex; gap: 2px;">
+                          <div class="flex items-center gap-3 px-3 py-2 rounded-xl border-2 border-slate-100 bg-white">
+                            <div class="flex gap-1 shrink-0">
                               <template x-for="s in ['100', '500', '900']" :key="s">
-                                <div :style="`width: 10px; height: 10px; border-radius: 2px; background: ${acc.shades[s]};`"></div>
+                                <div class="w-3 h-3 rounded-[3px] shadow-sm" :style="`background: ${acc.shades[s]};`"></div>
                               </template>
                             </div>
-                            <span class="sans" style="font-size: 12px; color: #374151;" x-text="acc.name"></span>
+                            <span class="text-xs font-bold text-slate-700" x-text="acc.name"></span>
                           </div>
                         </template>
                       </div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                      <button class="btn-primary" style="flex: 1;" @click="setTab('components')">
-                        Enregistrer et passer aux composants →
+
+                    <div class="pt-6 flex flex-col md:flex-row gap-4">
+                      <button class="btn-primary flex-1 py-4 text-base shadow-lg shadow-brand-primary/20" @click="setTab('components')">
+                        Confirmer et choisir les composants →
                       </button>
-                      <button class="btn-secondary" @click="downloadJSON()">
-                        ↓ Exporter JSON
+                      <button class="btn-secondary py-4" @click="downloadJSON()">
+                        ↓ Exporter le JSON
                       </button>
                     </div>
                   </div>
                 </template>
-
-              </div>
+              </section>
               
               <!-- Next / Prev Navbar -->
-              <div style="display: flex; justify-content: space-between;">
-                <button class="btn-secondary" @click="step = Math.max(0, step - 1)" :disabled="step === 0" x-show="step > 0">← Précédent</button>
-                <div x-show="step === 0" style="width: 10px;"></div> <!-- Spacer -->
-                <button class="btn-primary" @click="step = step + 1" x-show="step < STEPS.length - 1">Suivant →</button>
-              </div>
+              <footer class="flex justify-between items-center pt-2">
+                <template x-if="step > 0">
+                  <button class="btn-secondary flex items-center gap-2" @click="step = Math.max(0, step - 1)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Précédent
+                  </button>
+                </template>
+                <template x-if="step === 0"><div></div></template>
+                
+                <template x-if="step < STEPS.length - 1">
+                  <button class="btn-primary flex items-center gap-2 px-8 py-3" @click="step = step + 1">
+                    Suivant
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                  </button>
+                </template>
+              </footer>
             </div>
           </template>
 
           <!-- TAB: COMPONENTS -->
           <template x-if="tab === 'components'">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                <p class="sans" style="font-size: 13px; color: #6b7280; margin: 0;">Sélectionnez les composants à documenter et à inclure dans la to-do.</p>
-                <button @click="toggleSelectAllGlobal()" class="sans" style="padding: 4px 12px; border-radius: 6px; border: 1px solid #e5e7eb; background: #fafafa; font-size: 11px; color: #374151; cursor: pointer; white-space: nowrap;" x-text="totalSelected === totalCompsCount ? 'Tout désélectionner' : 'Tout sélectionner'">
-                </button>
-              </div>
-              
-              <template x-for="group in GROUPS" :key="group">
-                <div style="margin-bottom: 18px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                    <div class="sans" style="font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; display: flex; gap: 6px; align-items: center;">
-                      <span x-text="group"></span>
-                      <span style="font-weight: 400; color: #d1d5db;" x-text="`${selectedComponents[group].length}/${catalog[group].length}`"></span>
-                    </div>
-                    <button @click="toggleSelectAll(group)" class="sans" style="padding: 2px 10px; border-radius: 6px; border: 1px solid #e5e7eb; background: transparent; font-size: 10px; color: #6b7280; cursor: pointer;" x-text="isGroupAllSelected(group) ? 'Tout désélectionner' : 'Tout sélectionner'">
-                    </button>
-                  </div>
-                  <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: 8px;">
-                    <template x-for="comp in catalog[group]" :key="comp.id">
-                      <button @click="toggleComponent(group, comp.id)" 
-                              :style="isComponentSelected(group, comp.id) ? 'background: #f0f0ff; border-color: #4f46e5;' : 'background: #fafafa; border-color: #e5e7eb;'"
-                              style="padding: 10px 12px; border-radius: 10px; border: 1.5px solid; text-align: left; cursor: pointer; transition: all 0.12s;">
-                        <div class="sans" :style="isComponentSelected(group, comp.id) ? 'color: #4f46e5;' : 'color: #1a1a2e;'" style="font-size: 12px; font-weight: 600; margin-bottom: 2px;">
-                          <span x-show="isComponentSelected(group, comp.id)">✓ </span><span x-text="comp.name"></span>
-                        </div>
-                        <div class="sans" style="font-size: 11px; color: #9ca3af;" x-text="comp.desc"></div>
-                      </button>
-                    </template>
-                  </div>
+            <div class="space-y-6">
+              <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-6">
+                <div class="space-y-1">
+                  <h2 class="text-xl font-extrabold text-brand-dark leading-tight">Catalogue de composants</h2>
+                  <p class="text-xs font-medium text-slate-400">Sélectionnez les composants à documenter et à inclure dans la to-do.</p>
                 </div>
-              </template>
+                <button @click="toggleSelectAllGlobal()" class="btn-secondary !py-2 !text-xs whitespace-nowrap" x-text="totalSelected === totalCompsCount ? 'Tout désélectionner' : 'Tout sélectionner'">
+                </button>
+              </header>
               
-              <div style="position: sticky; bottom: 0; background: #f9fafb; padding-top: 12px; border-top: 1px solid #e5e7eb; margin-top: 8px; display: flex; gap: 10px;">
-                <button class="btn-primary" style="flex: 1;" @click="setTab('todo')" :disabled="totalSelected === 0">
-                   Enregistrer et ouvrir la to-do (<span x-text="totalSelected"></span>) →
-                </button>
-                <button class="btn-secondary" @click="downloadSpecs()" :disabled="totalSelected === 0">
-                  ↓ Specs MD
-                </button>
+              <div class="space-y-10">
+                <template x-for="group in GROUPS" :key="group">
+                  <section class="space-y-4">
+                    <div class="flex items-center justify-between">
+                      <h3 class="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400">
+                        <span x-text="group"></span>
+                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold" x-text="`${selectedComponents[group].length}/${catalog[group].length}`"></span>
+                      </h3>
+                      <button @click="toggleSelectAll(group)" class="text-[10px] font-bold text-brand-primary hover:underline uppercase tracking-wider" x-text="isGroupAllSelected(group) ? 'Désélectionner tout' : 'Sélectionner tout'">
+                      </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <template x-for="comp in catalog[group]" :key="comp.id">
+                        <button @click="toggleComponent(group, comp.id)" 
+                                class="p-4 rounded-xl border-2 text-left transition-all duration-200 group relative"
+                                :class="isComponentSelected(group, comp.id) ? 'bg-brand-primary/5 border-brand-primary shadow-sm' : 'bg-white border-slate-100 hover:border-brand-primary/30'">
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-bold tracking-tight" :class="isComponentSelected(group, comp.id) ? 'text-brand-primary' : 'text-brand-dark'" x-text="comp.name"></span>
+                            <div x-show="isComponentSelected(group, comp.id)" class="w-4 h-4 rounded-full bg-brand-primary flex items-center justify-center">
+                              <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                          </div>
+                          <p class="text-[11px] text-slate-400 font-medium leading-relaxed line-clamp-2" x-text="comp.desc"></p>
+                        </button>
+                      </template>
+                    </div>
+                  </section>
+                </template>
               </div>
+              
+              <footer class="sticky bottom-6 bg-white/80 backdrop-blur-md rounded-2xl border-2 border-slate-100 p-4 shadow-xl z-20 flex flex-col md:flex-row gap-4 items-center mt-12">
+                <p class="text-xs font-bold text-slate-500 mr-auto px-2">
+                  <span class="text-brand-primary" x-text="totalSelected"></span> composant(s) sélectionné(s)
+                </p>
+                <div class="flex gap-4 w-full md:w-auto">
+                  <button class="btn-primary flex-1 px-8 py-3 shadow-lg shadow-brand-primary/20" @click="setTab('todo')" :disabled="totalSelected === 0">
+                    Ouvrir la to-do →
+                  </button>
+                  <button class="btn-secondary px-8 py-3" @click="downloadSpecs()" :disabled="totalSelected === 0">
+                    Specs MD
+                  </button>
+                </div>
+              </footer>
             </div>
           </template>
 
           <!-- TAB: TODO -->
           <template x-if="tab === 'todo'">
-            <div>
+            <div class="space-y-8 pb-12">
               <!-- Empty state -->
               <template x-if="totalSelected === 0">
-                <div style="text-align: center; padding: 40px 20px; color: #9ca3af;">
-                  <div style="font-size: 32px; margin-bottom: 12px;">☐</div>
-                  <div class="sans" style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Aucun composant sélectionné</div>
-                  <div class="sans" style="font-size: 12px;">Allez dans <strong>Composants</strong> pour faire votre sélection.</div>
+                <div class="flex flex-col items-center justify-center p-20 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-slate-300">
+                  <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                  <h3 class="text-sm font-bold text-slate-400">Aucun composant sélectionné</h3>
+                  <p class="text-xs font-medium">Allez dans l'onglet Composants pour faire votre sélection.</p>
                 </div>
               </template>
 
               <!-- Warning state -->
               <template x-if="totalSelected > 0 && (!variablesConfigured || !componentsConfirmed)">
-                <div style="border-radius: 10px; border: 1.5px solid #fde68a; background: #fffbeb; padding: 16px;">
-                  <div class="sans" style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">⚠️ Configuration incomplète</div>
-                  <div class="sans" style="font-size: 12px; color: #78350f; margin-bottom: 12px;">
-                    <span x-show="!variablesConfigured">Les variables n'ont pas été générées. </span>
-                    <span x-show="!componentsConfirmed">Les composants n'ont pas été confirmés. </span>
-                    Les tokens affichés seront ceux du modèle par défaut.
+                <div class="p-6 rounded-2xl border-2 border-amber-200 bg-amber-50 space-y-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-amber-800 uppercase tracking-wider">Configuration incomplète</h4>
+                      <p class="text-xs text-amber-700 font-medium">Les tokens affichés seront ceux du modèle par défaut.</p>
+                    </div>
                   </div>
-                  <button class="btn-primary" @click="variablesConfigured = true; componentsConfirmed = true;">Continuer avec le modèle par défaut</button>
+                  <button class="btn-primary !bg-amber-600 !text-xs w-full py-3 shadow-lg shadow-amber-600/20" @click="variablesConfigured = true; componentsConfirmed = true;">Ignorer et continuer</button>
                 </div>
               </template>
 
@@ -409,98 +500,109 @@
                     get globalStats() {
                         return this.getGlobalTodoProgress();
                     }
-                }">
-                  <div>
-                    <!-- Global Progress -->
-                    <div style="padding: 12px 16px; border-radius: 10px; background: #f8fafc; border: 1px solid #e5e7eb; margin-bottom: 16px;">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span class="sans" style="font-size: 11px; font-weight: 700; color: #374151;">Progression globale</span>
-                        <span class="sans" style="font-size: 11px; font-weight: 700; color: #4f46e5;" x-text="`${globalStats.percent}% (${globalStats.done}/${globalStats.total})`"></span>
-                      </div>
-                      <div style="display: flex; gap: 4px;">
-                        <template x-for="(gwc, i) in groupsWithComps" :key="gwc.group">
-                          <button @click="todoCategoryIdx = i" 
-                                  :title="gwc.group"
-                                  :style="todoCategoryIdx === i ? 'background: #4f46e5; outline: 2px solid #818cf8; outline-offset: 2px;' : 'background: #e5e7eb; outline: none;'"
-                                  style="flex: 1; height: 6px; border-radius: 999px; border: none; cursor: pointer; padding: 0; transition: all 0.2s;">
-                          </button>
-                        </template>
-                      </div>
+                }" class="space-y-10">
+                  
+                  <!-- Global Progress Bar -->
+                  <div class="p-6 rounded-2xl bg-white border-2 border-slate-100 shadow-sm space-y-4">
+                    <div class="flex justify-between items-end">
+                       <div class="space-y-1">
+                         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Progression globale</h3>
+                         <p class="text-2xl font-black text-brand-dark" x-text="`${globalStats.percent}%`"></p>
+                       </div>
+                       <div class="text-[10px] font-black uppercase tracking-widest text-brand-primary" x-text="`${globalStats.done} / ${globalStats.total} propriétés` text-brand-primary></div>
                     </div>
-
-                    <!-- Category header -->
-                    <div style="margin-bottom: 16px;">
-                      <div style="display: flex; align-items: baseline; justify-content: space-between;">
-                        <h2 class="sans" :style="catDone ? 'color: #16a34a;' : 'color: #1a1a2e;'" style="font-size: 18px; font-weight: 800; margin: 0;" x-text="cat.group"></h2>
-                        <span class="sans" style="font-size: 12px; color: #6b7280;" x-text="`${getCompletedCount(catItems)} / ${catItems.length} propriétés cochées`"></span>
-                      </div>
-                      <template x-if="catDone">
-                        <div class="sans" style="font-size: 12px; color: #16a34a; margin-top: 4px;">✓ Catégorie complète</div>
-                      </template>
-                    </div>
-
-                    <!-- Category nav pills -->
-                    <div style="display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;">
+                    
+                    <div class="flex h-3 gap-1.5 p-1 bg-slate-100 rounded-full">
                       <template x-for="(gwc, i) in groupsWithComps" :key="gwc.group">
-                        <button @click="todoCategoryIdx = i"
-                                :style="i === todoCategoryIdx ? 'background: #1a1a2e; color: #fff; border-color: #1a1a2e;' : 'background: transparent; color: #6b7280; border-color: #e5e7eb;'"
-                                class="sans" style="padding: 4px 12px; border-radius: 999px; border: 1.5px solid; font-size: 11px; font-weight: 600; cursor: pointer;">
-                          <span x-text="gwc.group"></span>
+                        <button @click="todoCategoryIdx = i" 
+                                class="h-full rounded-full transition-all duration-300 relative group"
+                                :class="todoCategoryIdx === i ? 'flex-[2] bg-brand-primary ring-4 ring-brand-primary/10' : 'flex-1 bg-slate-300 hover:bg-slate-400'">
+                          <div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-brand-dark text-white text-[9px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap" x-text="gwc.group"></div>
                         </button>
                       </template>
                     </div>
 
-                    <!-- Components current category list -->
-                    <template x-for="comp in cat.comps" :key="comp.id">
-                      <div x-data="{
-                        get items() { return buildTodoItems(comp); },
-                        get compDone() { return getCompletedCount(this.items); },
-                        get isCompDone() { return this.compDone === this.items.length; },
-                        toggleAll() {
-                           const allChecked = this.items.every(it => todoChecked[it.id]);
-                           this.items.forEach(it => { todoChecked[it.id] = !allChecked; });
-                        }
-                      }" :style="isCompDone ? 'border-color: #bbf7d0; background: #f0fdf4;' : 'border-color: #e5e7eb; background: #fff;'"
-                         style="margin-bottom: 12px; border-radius: 10px; border: 1.5px solid; overflow: hidden;">
-                        
-                        <div :style="isCompDone ? 'border-bottom-color: #bbf7d0;' : 'border-bottom-color: #f3f4f6;'" style="padding: 10px 14px; border-bottom: 1px solid; display: flex; align-items: center; gap: 10px;">
-                          <div :style="isCompDone ? 'border-color: #16a34a; background: #16a34a;' : 'border-color: #d1d5db; background: transparent;'" style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; flex-shrink: 0;">
-                            <span x-show="isCompDone">✓</span>
-                          </div>
-                          <div style="flex: 1;">
-                            <div class="sans" style="font-size: 13px; font-weight: 700; color: #1a1a2e;" x-text="comp.name"></div>
-                            <div class="sans" style="font-size: 11px; color: #6b7280;" x-text="`${compDone}/${items.length} propriétés`"></div>
-                          </div>
-                          <button @click="toggleAll()" class="sans" style="padding: 3px 10px; border-radius: 6px; border: 1px solid #e5e7eb; background: transparent; font-size: 10px; color: #6b7280; cursor: pointer;"
-                                  x-text="items.every(it => todoChecked[it.id]) ? 'Tout décocher' : 'Tout cocher'"></button>
-                        </div>
-                        
-                        <div style="padding: 10px 14px;">
-                          <template x-for="item in items" :key="item.id">
-                            <label :style="item.level === 2 ? 'padding-left: 24px;' : 'padding-left: 0;'" style="display: flex; align-items: center; gap: 8px; margin-bottom: 7px; cursor: pointer;">
-                              <input type="checkbox" @change="toggleTodoItem(item.id)" :checked="todoChecked[item.id]" style="accent-color: #4f46e5; flex-shrink: 0; width: 14px; height: 14px;" />
-                              <span :class="item.level === 2 ? 'mono' : 'sans'" :style="item.level === 2 ? 'font-size: 11px;' : 'font-size: 12px;'" style="font-weight: 400; color: #1a1a2e; line-height: 1.3;"
-                                    :style="todoChecked[item.id] ? 'color: #9ca3af; text-decoration: line-through;' : (item.isState ? 'font-weight: 700; color: #1a1a2e;' : 'color: #1a1a2e;')">
-                                <span x-text="item.label"></span>
-                                <template x-if="item.var">
-                                  <span class="mono" style="font-size: 10px; color: #9ca3af; margin-left: 8px;" x-text="`→ ${item.var}`"></span>
-                                </template>
-                              </span>
-                            </label>
-                          </template>
-                        </div>
-                      </div>
-                    </template>
+                    <div class="flex gap-2 flex-wrap pt-2">
+                       <template x-for="(gwc, i) in groupsWithComps" :key="gwc.group">
+                         <button @click="todoCategoryIdx = i"
+                                 class="px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all border-2"
+                                 :class="i === todoCategoryIdx ? 'bg-brand-dark text-white border-brand-dark' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200'">
+                           <span x-text="gwc.group"></span>
+                         </button>
+                       </template>
+                    </div>
+                  </div>
 
-                    <!-- Nav prev/next + export -->
-                    <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
-                      <button class="btn-secondary" @click="todoCategoryIdx = Math.max(0, todoCategoryIdx - 1)" :disabled="todoCategoryIdx === 0" style="padding: 8px 14px;">← Préc.</button>
-                      <button class="btn-primary" @click="todoCategoryIdx = Math.min(groupsWithComps.length - 1, todoCategoryIdx + 1)" :disabled="todoCategoryIdx === groupsWithComps.length - 1" style="flex: 1;">
-                        <span x-text="todoCategoryIdx < groupsWithComps.length - 1 ? `Suivant : ${groupsWithComps[todoCategoryIdx + 1].group} →` : 'Terminé'"></span>
-                      </button>
-                      <button class="btn-secondary" @click="downloadTodo()" style="padding: 8px 14px;">↓ MD</button>
+                  <!-- Category Detail -->
+                  <div class="space-y-6">
+                    <header class="flex items-center justify-between border-b-2 border-slate-100 pb-6">
+                       <div class="space-y-1">
+                         <div class="flex items-center gap-3">
+                           <h2 class="text-2xl font-black text-brand-dark tracking-tight" x-text="cat.group"></h2>
+                           <span x-show="catDone" class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest">Gagné !</span>
+                         </div>
+                         <p class="text-xs font-medium text-slate-400" x-text="`${getCompletedCount(catItems)} / ${catItems.length} validés`"></p>
+                       </div>
+                    </header>
+
+                    <div class="space-y-4">
+                      <template x-for="comp in cat.comps" :key="comp.id">
+                        <div x-data="{
+                          get items() { return buildTodoItems(comp); },
+                          get compDone() { return getCompletedCount(this.items); },
+                          get isCompDone() { return this.compDone === this.items.length; },
+                          toggleAll() {
+                             const allChecked = this.items.every(it => todoChecked[it.id]);
+                             this.items.forEach(it => { todoChecked[it.id] = !allChecked; });
+                          }
+                        }" class="bg-white rounded-2xl border-2 transition-all duration-300 overflow-hidden"
+                           :class="isCompDone ? 'border-green-100 bg-green-50/20 shadow-none' : 'border-slate-100 shadow-sm'">
+                          
+                          <div class="px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100" @click="toggleAll()">
+                            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
+                                 :class="isCompDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-200 text-transparent'">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div class="flex-1">
+                               <h4 class="text-sm font-extrabold text-brand-dark leading-none pb-1" x-text="comp.name"></h4>
+                               <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" x-text="`${compDone}/${items.length} propriétés`"></p>
+                            </div>
+                            <button class="text-[10px] font-black uppercase tracking-widest text-brand-primary" x-text="items.every(it => todoChecked[it.id]) ? 'Tout décocher' : 'Tout cocher'"></button>
+                          </div>
+                          
+                          <div class="px-6 py-4 space-y-1">
+                            <template x-for="item in items" :key="item.id">
+                              <label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer group transition-all" :class="item.level === 2 ? 'ml-6' : ''">
+                                <input type="checkbox" @change="toggleTodoItem(item.id)" :checked="todoChecked[item.id]" class="w-4 h-4 rounded border-2 border-slate-200 text-brand-primary focus:ring-brand-primary transition-all" />
+                                <div class="flex flex-1 items-baseline gap-3">
+                                  <span class="text-sm transition-all" 
+                                        :class="[
+                                          todoChecked[item.id] ? 'text-slate-300 line-through' : 'text-slate-700',
+                                          item.isState ? 'font-bold' : 'font-medium',
+                                          item.level === 2 ? 'font-mono text-xs' : ''
+                                        ]"
+                                        x-text="item.label"></span>
+                                  <template x-if="item.var">
+                                    <span class="font-mono text-[9px] text-slate-300 font-bold px-2 py-0.5 rounded bg-slate-50 group-hover:bg-slate-100 transition-colors" x-text="`→ ${item.var}`"></span>
+                                  </template>
+                                </div>
+                              </label>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
                     </div>
 
+                    <footer class="flex flex-col md:flex-row gap-4 pt-10 border-t-2 border-slate-100">
+                      <button class="btn-secondary !px-10" @click="todoCategoryIdx = Math.max(0, todoCategoryIdx - 1)" :disabled="todoCategoryIdx === 0">Précédent</button>
+                      <button class="btn-primary flex-1 py-4 text-base shadow-xl shadow-brand-primary/20" @click="todoCategoryIdx = Math.min(groupsWithComps.length - 1, todoCategoryIdx + 1)" :disabled="todoCategoryIdx === groupsWithComps.length - 1">
+                        <span x-text="todoCategoryIdx < groupsWithComps.length - 1 ? `Suivant : ${groupsWithComps[todoCategoryIdx + 1].group} →` : 'Fin de la liste'"></span>
+                      </button>
+                      <button class="btn-secondary flex items-center gap-3 !px-10" @click="downloadTodo()">
+                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                         Exporter MD
+                      </button>
+                    </footer>
                   </div>
                 </div>
               </template>
