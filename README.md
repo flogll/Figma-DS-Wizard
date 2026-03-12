@@ -8,11 +8,12 @@ Générez vos variables Figma et documentez vos composants Design System en quel
 
 ## 🛠️ Développement & Structure
 
-Ce projet est une application React moderne motorisée par **Vite**. Il est conçu pour être modulaire, rapide et installable (PWA).
+Ce projet est une application HTML/Javascript "Vanilla" ultra-légère, utilisant **Alpine.js** pour la réactivité. Il est conçu pour être modulaire, rapide et installable (PWA) **sans aucune étape de build (Buildless)**.
 
-- **`src/logic.js`** : Contient toute la logique métier et le catalogue de composants.
-- **`src/Interface.jsx`** : Gère toute l'interface utilisateur et les styles.
-- **Déploiement** : Automatisé via GitHub Actions vers GitHub Pages.
+- **`assets/logic.js`** : Contient toute la logique métier et le catalogue de composants (JavaScript pur).
+- **`assets/app.js`** : Gère l'état de l'application via Alpine.js.
+- **`index.html`** / **`assets/style.css`** : Structure et styles de l'interface.
+- **Déploiement** : Automatisé via GitHub Actions vers GitHub Pages (déploiement direct).
 
 ## 📖 Documentation technique
 
@@ -23,6 +24,6 @@ Si tu souhaites modifier ce projet ou comprendre comment il fonctionne :
 
 ## 💻 Workflow de mise à jour
 
-1. Modifier le code dans `/src`
-2. Tester localement : `npm run dev`
-3. Publier : `git add .` -> `git commit` -> `git push`
+1. Modifier le code dans `/assets` ou `index.html`
+2. Tester localement via un serveur local HTTP basique (ex: `python3 -m http.server 8000` ou *Live Server* dans VS Code).
+3. Publier : `git add .` -> `git commit -m "..."` -> `git push`
