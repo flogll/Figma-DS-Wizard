@@ -25,6 +25,13 @@ Alpine.data('dsWizard', () => ({
     this.GROUPS.forEach(g => {
       this.selectedComponents[g] = [];
     });
+    // Initialize todo properties to ensure deep reactivity
+    this.allComps.forEach(comp => {
+      const items = buildTodoItems(comp);
+      items.forEach(it => {
+        this.todoChecked[it.id] = false;
+      });
+    });
   },
 
   get totalSelected() {
@@ -107,8 +114,54 @@ Alpine.data('dsWizard', () => ({
   },
 
     // Todo Handlers
-    toggleTodoItem(id) {
-        this.todoChecked[id] = !this.todoChecked[id];
+    handleTodoChange(id, items) {
+        const item = items.find(it => it.id === id);
+        if (!item) return;
+
+        const targetState = this.todoChecked[id];
+
+        if (item.level === 1) {
+            // Level 1: toggle all Level 2 children below it until the next Level 1
+            const clickedIndex = items.findIndex(it => it.id === id);
+            for (let i = clickedIndex + 1; i < items.length; i++) {
+                if (items[i].level === 1) break; // Next Level 1 item
+                this.todoChecked[items[i].id] = targetState;
+            }
+        } else if (item.level === 2) {
+            // Level 2: update parent Level 1
+            const clickedIndex = items.findIndex(it => it.id === id);
+            let parentId = null;
+            let parentIndex = -1;
+            
+            for (let i = clickedIndex - 1; i >= 0; i--) {
+                if (items[i].level === 1) {
+                    parentId = items[i].id;
+                    parentIndex = i;
+                    break;
+                }
+            }
+            
+            if (parentId) {
+                let allChildrenChecked = true;
+                let hasChildren = false;
+                for (let i = parentIndex + 1; i < items.length; i++) {
+                    if (items[i].level === 1) break;
+                    hasChildren = true;
+                    if (!this.todoChecked[items[i].id]) {
+                        allChildrenChecked = false;
+                        break;
+                    }
+                }
+                if (hasChildren) {
+                    this.todoChecked[parentId] = allChildrenChecked;
+                }
+            }
+        }
+    },
+
+    toggleAllComponent(items) {
+        const allChecked = items.every(it => this.todoChecked[it.id]);
+        items.forEach(it => { this.todoChecked[it.id] = !allChecked; });
     },
 
     getCompletedCount(compItems) {

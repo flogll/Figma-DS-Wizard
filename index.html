@@ -509,7 +509,7 @@
                          <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Progression globale</h3>
                          <p class="text-2xl font-black text-brand-dark" x-text="`${globalStats.percent}%`"></p>
                        </div>
-                       <div class="text-[10px] font-black uppercase tracking-widest text-brand-primary" x-text="`${globalStats.done} / ${globalStats.total} propriétés` text-brand-primary></div>
+                       <div class="text-[10px] font-black uppercase tracking-widest text-brand-primary" x-text="`${globalStats.done} / ${globalStats.total} propriétés`"></div>
                     </div>
                     
                     <div class="flex h-3 gap-1.5 p-1 bg-slate-100 rounded-full">
@@ -550,15 +550,11 @@
                         <div x-data="{
                           get items() { return buildTodoItems(comp); },
                           get compDone() { return getCompletedCount(this.items); },
-                          get isCompDone() { return this.compDone === this.items.length; },
-                          toggleAll() {
-                             const allChecked = this.items.every(it => todoChecked[it.id]);
-                             this.items.forEach(it => { todoChecked[it.id] = !allChecked; });
-                          }
+                          get isCompDone() { return this.compDone === this.items.length && this.items.length > 0; }
                         }" class="bg-white rounded-2xl border-2 transition-all duration-300 overflow-hidden"
                            :class="isCompDone ? 'border-green-100 bg-green-50/20 shadow-none' : 'border-slate-100 shadow-sm'">
                           
-                          <div class="px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100" @click="toggleAll()">
+                          <div class="px-6 py-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100" @click="toggleAllComponent(items)">
                             <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
                                  :class="isCompDone ? 'bg-green-500 border-green-500 text-white' : 'border-slate-200 text-transparent'">
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -573,7 +569,7 @@
                           <div class="px-6 py-4 space-y-1">
                             <template x-for="item in items" :key="item.id">
                               <label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer group transition-all" :class="item.level === 2 ? 'ml-6' : ''">
-                                <input type="checkbox" @change="toggleTodoItem(item.id)" :checked="todoChecked[item.id]" class="w-4 h-4 rounded border-2 border-slate-200 text-brand-primary focus:ring-brand-primary transition-all" />
+                                <input type="checkbox" x-model="todoChecked[item.id]" @change="handleTodoChange(item.id, items)" class="w-4 h-4 rounded border-2 border-slate-200 text-brand-primary focus:ring-brand-primary transition-all" />
                                 <div class="flex flex-1 items-baseline gap-3">
                                   <span class="text-sm transition-all" 
                                         :class="[
